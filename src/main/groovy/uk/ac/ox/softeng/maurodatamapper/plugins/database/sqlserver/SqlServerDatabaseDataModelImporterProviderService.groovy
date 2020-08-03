@@ -100,7 +100,6 @@ WHERE s.name = ?;
         super.prepareCoreStatement(connection, params)
     }
 
-    @Override
     List<DataModel> importAndUpdateDataModelsFromResults(User currentUser, String databaseName, SqlServerDatabaseDataModelImporterProviderServiceParameters params,
                                                          Folder folder,
                                                          String modelName, List<Map<String, Object>> results, Connection connection) {

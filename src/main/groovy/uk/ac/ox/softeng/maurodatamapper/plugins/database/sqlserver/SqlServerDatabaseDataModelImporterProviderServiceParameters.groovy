@@ -27,8 +27,9 @@ public class SqlServerDatabaseDataModelImporterProviderServiceParameters extends
     private String domain;
     @ImportParameterConfig(
         displayName = "Import Schemas as Separate DataModels",
-        description = "Import the schemas found (or defined) as individual DataModels. Each schema DataModel will be imported with the name of the " +
-                      "schema.",
+        description = [
+            "Import the schemas found (or defined) as individual DataModels.",
+            "Each schema DataModel will be imported with the name of the schema."],
         optional = true,
         order = 3,
         group = @ImportGroupConfig(
@@ -39,8 +40,9 @@ public class SqlServerDatabaseDataModelImporterProviderServiceParameters extends
     private Boolean importSchemasAsSeparateModels;
     @ImportParameterConfig(
         displayName = "Database Schema/s",
-        description = "A comma-separated list of the schema names to import.If not supplied then all schemas other than 'sys' and " +
-                      "'INFORMATION_SCHEMA' will be imported.",
+        description = [
+            "A comma-separated list of the schema names to import.",
+            "If not supplied then all schemas other than 'sys' and 'INFORMATION_SCHEMA' will be imported."],
         optional = true,
         order = 2,
         group = @ImportGroupConfig(
@@ -51,8 +53,9 @@ public class SqlServerDatabaseDataModelImporterProviderServiceParameters extends
     private String schemaNames;
     @ImportParameterConfig(
         displayName = "SQL Server Instance",
-        description = "The name of the SQL Server Instance. This only needs to be supplied if the server is running an instance with a different " +
-                      "name to the server.",
+        description = [
+            "The name of the SQL Server Instance.",
+            "This only needs to be supplied if the server is running an instance with a different name to the server."],
         optional = true,
         order = 2,
         group = @ImportGroupConfig(
