@@ -1,5 +1,6 @@
 package uk.ac.ox.softeng.maurodatamapper.plugins.database.sqlserver
 
+import groovy.util.logging.Slf4j
 import uk.ac.ox.softeng.maurodatamapper.core.container.Folder
 import uk.ac.ox.softeng.maurodatamapper.datamodel.DataModel
 import uk.ac.ox.softeng.maurodatamapper.plugins.database.AbstractDatabaseDataModelImporterProviderService
@@ -12,6 +13,7 @@ import java.sql.PreparedStatement
 /**
  * Created by james on 31/05/2017.
  */
+@Slf4j
 class SqlServerDatabaseDataModelImporterProviderService extends AbstractDatabaseDataModelImporterProviderService<SqlServerDatabaseDataModelImporterProviderServiceParameters>
         implements RemoteDatabaseDataModelImporterProviderService {
 
@@ -108,13 +110,13 @@ WHERE s.name = ?;
                                                               folder, modelName, results, connection)
         }
 
-        getLogger().debug('Importing all schemas as separate DataModels')
+        log.debug('Importing all schemas as separate DataModels')
         Map<String, List<Map<String, Object>>> groupedSchemas = results.groupBy {row ->
             row.get(getSchemaNameColumnName()) as String
         }
 
         groupedSchemas.collect {schema, schemaResults ->
-            getLogger().debug('Importing database {} schema {}', databaseName, schema)
+            log.debug('Importing database {} schema {}', databaseName, schema)
             DataModel dataModel = importDataModelFromResults(currentUser, folder, schema, params.getDatabaseDialect(), schemaResults, false)
             if (params.dataModelNameSuffix) dataModel.aliasesString = databaseName
             updateDataModelWithDatabaseSpecificInformation(dataModel, connection)

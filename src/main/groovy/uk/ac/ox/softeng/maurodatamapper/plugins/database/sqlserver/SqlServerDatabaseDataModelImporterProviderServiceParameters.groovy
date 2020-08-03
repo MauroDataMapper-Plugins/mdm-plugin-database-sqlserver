@@ -1,5 +1,6 @@
-package uk.ac.ox.softeng.maurodatamapper.plugins.database.sqlserver;
+package uk.ac.ox.softeng.maurodatamapper.plugins.database.sqlserver
 
+import groovy.util.logging.Slf4j;
 import uk.ac.ox.softeng.maurodatamapper.core.provider.importer.parameter.config.ImportGroupConfig;
 import uk.ac.ox.softeng.maurodatamapper.core.provider.importer.parameter.config.ImportParameterConfig;
 import uk.ac.ox.softeng.maurodatamapper.plugins.database.DatabaseDataModelImporterProviderServiceParameters;
@@ -13,6 +14,7 @@ import java.util.Properties;
 /**
  * Created by james on 31/05/2017.
  */
+@Slf4j
 public class SqlServerDatabaseDataModelImporterProviderServiceParameters extends DatabaseDataModelImporterProviderServiceParameters<JtdsDataSource> {
 
     @ImportParameterConfig(
@@ -159,7 +161,7 @@ public class SqlServerDatabaseDataModelImporterProviderServiceParameters extends
         if (getUseNtlmv2()) dataSource.setUseNTLMV2(getUseNtlmv2());
         if (getDomain() != null) dataSource.setDomain(getDomain());
 
-        getLogger().debug("DataSource connection url using JTDS [NTLMv2: {}, Domain: {}]", getUseNtlmv2(), getDomain());
+        log.debug("DataSource connection url using JTDS [NTLMv2: {}, Domain: {}]", getUseNtlmv2(), getDomain());
 
         return dataSource;
     }
@@ -182,7 +184,7 @@ public class SqlServerDatabaseDataModelImporterProviderServiceParameters extends
         //dataSource.setIntegratedSecurity(true);
         //dataSource.setAuthenticationScheme("JavaKerberos");
 
-        getLogger().info("DataSource connection using SQLServer");
+        log.info("DataSource connection using SQLServer");
 
         return dataSource;
     }
