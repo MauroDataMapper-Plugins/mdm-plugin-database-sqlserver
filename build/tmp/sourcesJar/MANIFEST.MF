@@ -1,0 +1,12 @@
+Manifest-Version: 1.0
+Implementation-Title: ox.softeng.metadatacatalogue.plugins.mc-plugin-d
+ atabase-sqlserver
+Implementation-Version: 1.12.1-SNAPSHOT.dev
+Specification-Title: metadata-catalogue mc-plugin-database-sqlserver C
+ lasses
+Created-By: 1.8 JVM, 3.5.1 Gradle
+Specification-Version: 1.12.1-SNAPSHOT
+Implementation-Vendor: Oxford University
+Main-Class: ox.softeng.metadatacatalogue.plugins.database.sqlserver.Sq
+ lServerDatabaseImporterService
+
