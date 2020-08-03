@@ -1,7 +1,14 @@
 dependencies {
-    if (rootProject == parent) implementation project(':mc-plugin-database')
-    else implementation project(':mc-plugins:mc-plugin-database')
-    // SQL Server JDBC
+    implementation group: 'uk.ac.ox.softeng.maurodatamapper', name: 'mdm-core', version: mdmCoreVersion
+    implementation group: 'uk.ac.ox.softeng.maurodatamapper', name: 'mdm-plugin-datamodel', version: mdmPluginDataModelVersion
+
+    implementation group: 'uk.ac.ox.softeng.maurodatamapper.plugins', name: 'mdm-plugin-database', version: mdmPluginDatabaseVersion
+    implementation group: 'uk.ac.ox.softeng.maurodatamapper.plugins', name: 'mdm-plugin-testing-utils', version: mdmPluginTestUtilsVersion
+
+    implementation group: 'org.codehaus.groovy', name: 'groovy-all', version: groovyVersion
+    implementation group: 'org.slf4j', name: 'slf4j-api', version: slf4jVersion
+    implementation group: 'ch.qos.logback', name: 'logback-classic', version: logbackVersion
+
     implementation group: 'com.microsoft.sqlserver', name: 'mssql-jdbc', version: sqlServerJdbcVersion
-    implementation group: 'net.sourceforge.jtds', name: 'jtds', version: '1.3.1'
+    implementation group: 'net.sourceforge.jtds', name: 'jtds', version: jtdsVersion
 }
