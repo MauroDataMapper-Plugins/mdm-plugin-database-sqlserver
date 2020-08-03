@@ -1,8 +1,8 @@
-package ox.softeng.metadatacatalogue.plugins.database.sqlserver;
+package uk.ac.ox.softeng.maurodatamapper.plugins.database.sqlserver;
 
-import ox.softeng.metadatacatalogue.core.spi.importer.parameter.config.ImportGroupConfig;
-import ox.softeng.metadatacatalogue.core.spi.importer.parameter.config.ImportParameterConfig;
-import ox.softeng.metadatacatalogue.plugins.database.DatabaseImportParameters;
+import uk.ac.ox.softeng.maurodatamapper.core.provider.importer.parameter.config.ImportGroupConfig;
+import uk.ac.ox.softeng.maurodatamapper.core.provider.importer.parameter.config.ImportParameterConfig;
+import uk.ac.ox.softeng.maurodatamapper.plugins.database.DatabaseDataModelImporterProviderServiceParameters;
 
 import com.google.common.base.Strings;
 import com.microsoft.sqlserver.jdbc.SQLServerDataSource;
@@ -13,7 +13,7 @@ import java.util.Properties;
 /**
  * Created by james on 31/05/2017.
  */
-public class SqlServerDatabaseImportParameters extends DatabaseImportParameters<JtdsDataSource> {
+public class SqlServerDatabaseDataModelImporterProviderServiceParameters extends DatabaseDataModelImporterProviderServiceParameters<JtdsDataSource> {
 
     @ImportParameterConfig(
         displayName = "Domain Name",

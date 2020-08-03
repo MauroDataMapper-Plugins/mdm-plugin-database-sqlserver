@@ -1,23 +1,20 @@
-package ox.softeng.metadatacatalogue.plugins.database.sqlserver.test
-
-import ox.softeng.metadatacatalogue.core.catalogue.linkable.component.DataClass
-import ox.softeng.metadatacatalogue.core.catalogue.linkable.datamodel.DataModel
-import ox.softeng.metadatacatalogue.core.facet.Metadata
-import ox.softeng.metadatacatalogue.plugins.database.sqlserver.SqlServerDatabaseImportParameters
-import ox.softeng.metadatacatalogue.plugins.database.sqlserver.SqlServerDatabaseImporterService
-import ox.softeng.metadatacatalogue.plugins.test.BaseDatabasePluginTest
+package uk.ac.ox.softeng.maurodatamapper.plugins.database.sqlserver
 
 import org.junit.Test
+import uk.ac.ox.softeng.maurodatamapper.core.facet.Metadata
+import uk.ac.ox.softeng.maurodatamapper.datamodel.DataModel
+import uk.ac.ox.softeng.maurodatamapper.datamodel.item.DataClass
+import uk.ac.ox.softeng.maurodatamapper.plugins.testing.utils.BaseDatabasePluginTest
 
 import static org.junit.Assert.assertEquals
 import static org.junit.Assert.assertNotNull
 import static org.junit.Assert.assertTrue
 
-class SqlServerImporterTest extends BaseDatabasePluginTest<SqlServerDatabaseImportParameters, SqlServerDatabaseImporterService> {
+class SqlServerDatabaseDataModelImporterProviderServiceTest extends BaseDatabasePluginTest<SqlServerDatabaseDataModelImporterProviderServiceParameters, SqlServerDatabaseDataModelImporterProviderService> {
 
     @Override
-    SqlServerDatabaseImportParameters createDatabaseImportParameters() {
-        SqlServerDatabaseImportParameters params = new SqlServerDatabaseImportParameters()
+    SqlServerDatabaseDataModelImporterProviderServiceParameters createDatabaseImportParameters() {
+        SqlServerDatabaseDataModelImporterProviderServiceParameters params = new SqlServerDatabaseDataModelImporterProviderServiceParameters()
         params.setDatabaseName("msdb")
         params.setDatabaseUsername("sa")
         params.setDatabasePassword("yourStrong(!)Password")
@@ -36,7 +33,7 @@ class SqlServerImporterTest extends BaseDatabasePluginTest<SqlServerDatabaseImpo
 
     @Test
     void testImportSimpleDatabase() {
-        SqlServerDatabaseImportParameters params = createDatabaseImportParameters(databaseHost, databasePort)
+        SqlServerDatabaseDataModelImporterProviderServiceParameters params = createDatabaseImportParameters(databaseHost, databasePort)
         params.setDatabaseName("metadata_simple")
 
         DataModel dataModel = importDataModelAndRetrieveFromDatabase(params);

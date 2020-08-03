@@ -1,15 +1,15 @@
-package ox.softeng.metadatacatalogue.plugins.database.sqlserver
+package uk.ac.ox.softeng.maurodatamapper.plugins.database.sqlserver
 
-import ox.softeng.metadatacatalogue.core.catalogue.linkable.component.datatype.DataType
-import ox.softeng.metadatacatalogue.core.catalogue.linkable.component.datatype.PrimitiveType
-import ox.softeng.metadatacatalogue.core.traits.spi.datatype.DefaultDataTypeProvider
+import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.DataTypeService
+import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.PrimitiveType
+import uk.ac.ox.softeng.maurodatamapper.datamodel.rest.transport.DefaultDataType
 
 /**
  * @since 19/04/2018
  */
-class SqlServerDefaultDataTypeProvider implements DefaultDataTypeProvider {
+class SqlServerDataTypeProvider extends DataTypeService {
     @Override
-    List<DataType> getDefaultListOfDataTypes() {
+    List<DefaultDataType> getDefaultListOfDataTypes() {
         [
             new PrimitiveType(label: 'char(n)', description: 'Fixed width character string\n8,000 characters'),
             new PrimitiveType(label: 'varchar(n)', description: 'Variable width character string\n8,000 characters'),

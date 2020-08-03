@@ -1,11 +1,10 @@
-package ox.softeng.metadatacatalogue.plugins.database.sqlserver
+package uk.ac.ox.softeng.maurodatamapper.plugins.database.sqlserver
 
-
-import ox.softeng.metadatacatalogue.core.catalogue.linkable.datamodel.DataModel
-import ox.softeng.metadatacatalogue.core.feature.Folder
-import ox.softeng.metadatacatalogue.core.user.CatalogueUser
-import ox.softeng.metadatacatalogue.plugins.database.AbstractDatabaseImporter
-import ox.softeng.metadatacatalogue.plugins.database.RemoteDatabaseImporter
+import uk.ac.ox.softeng.maurodatamapper.core.container.Folder
+import uk.ac.ox.softeng.maurodatamapper.datamodel.DataModel
+import uk.ac.ox.softeng.maurodatamapper.plugins.database.AbstractDatabaseDataModelImporterProviderService
+import uk.ac.ox.softeng.maurodatamapper.plugins.database.RemoteDatabaseDataModelImporterProviderService
+import uk.ac.ox.softeng.maurodatamapper.security.User
 
 import java.sql.Connection
 import java.sql.PreparedStatement
@@ -13,7 +12,8 @@ import java.sql.PreparedStatement
 /**
  * Created by james on 31/05/2017.
  */
-class SqlServerDatabaseImporterService extends AbstractDatabaseImporter<SqlServerDatabaseImportParameters> implements RemoteDatabaseImporter {
+class SqlServerDatabaseDataModelImporterProviderService extends AbstractDatabaseDataModelImporterProviderService<SqlServerDatabaseDataModelImporterProviderServiceParameters>
+        implements RemoteDatabaseDataModelImporterProviderService {
 
     @Override
     String getDatabaseStructureQueryString() {
@@ -86,7 +86,7 @@ WHERE s.name = ?;
     }
 
     @Override
-    PreparedStatement prepareCoreStatement(Connection connection, SqlServerDatabaseImportParameters params) {
+    PreparedStatement prepareCoreStatement(Connection connection, SqlServerDatabaseDataModelImporterProviderServiceParameters params) {
         PreparedStatement st
         if (params.schemaNames) {
             List<String> names = params.schemaNames.split(',')
@@ -101,7 +101,7 @@ WHERE s.name = ?;
     }
 
     @Override
-    List<DataModel> importAndUpdateDataModelsFromResults(CatalogueUser currentUser, String databaseName, SqlServerDatabaseImportParameters params,
+    List<DataModel> importAndUpdateDataModelsFromResults(User currentUser, String databaseName, SqlServerDatabaseDataModelImporterProviderServiceParameters params,
                                                          Folder folder,
                                                          String modelName, List<Map<String, Object>> results, Connection connection) {
         if (!params.getImportSchemasAsSeparateModels()) {
