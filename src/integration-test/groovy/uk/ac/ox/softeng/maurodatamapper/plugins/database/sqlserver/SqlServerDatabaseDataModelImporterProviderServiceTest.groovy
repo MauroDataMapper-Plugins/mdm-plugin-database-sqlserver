@@ -15,7 +15,7 @@ class SqlServerDatabaseDataModelImporterProviderServiceTest extends BaseDatabase
     @Override
     SqlServerDatabaseDataModelImporterProviderServiceParameters createDatabaseImportParameters() {
         SqlServerDatabaseDataModelImporterProviderServiceParameters params = new SqlServerDatabaseDataModelImporterProviderServiceParameters()
-        params.setDatabaseName("msdb")
+        params.setDatabaseNames("msdb")
         params.setDatabaseUsername("sa")
         params.setDatabasePassword("yourStrong(!)Password")
         return params
@@ -34,7 +34,7 @@ class SqlServerDatabaseDataModelImporterProviderServiceTest extends BaseDatabase
     @Test
     void testImportSimpleDatabase() {
         SqlServerDatabaseDataModelImporterProviderServiceParameters params = createDatabaseImportParameters(databaseHost, databasePort)
-        params.setDatabaseName("metadata_simple")
+        params.setDatabaseNames("metadata_simple")
 
         DataModel dataModel = importDataModelAndRetrieveFromDatabase(params);
 
@@ -49,13 +49,13 @@ class SqlServerDatabaseDataModelImporterProviderServiceTest extends BaseDatabase
         Set<DataClass> childDataClasses = dataModel.getChildDataClasses()
         DataClass publicSchema = childDataClasses.first()
 
-        assertEquals("Number of child tables/dataclasses", 3, publicSchema.getChildDataClasses()?.size())
+        assertEquals("Number of child tables/dataclasses", 3, publicSchema.getDataClasses()?.size())
 
-        Set<DataClass> dataClasses = publicSchema.childDataClasses
+        Set<DataClass> dataClasses = publicSchema.dataClasses
 
         // Tables
         DataClass metadataTable = dataClasses.find {it.label == "metadata"}
-        assertEquals("Metadata Number of columns/dataElements", 10, metadataTable.getChildDataElements().size())
+        assertEquals("Metadata Number of columns/dataElements", 10, metadataTable.getDataElements().size())
         assertEquals("Metadata Number of metadata", 5, metadataTable.metadata.size())
 
         assertTrue("MD All metadata values are valid", metadataTable.metadata.every {it.value && it.key != it.value})
@@ -70,7 +70,7 @@ class SqlServerDatabaseDataModelImporterProviderServiceTest extends BaseDatabase
         assertEquals("Correct order of columns", 'catalogue_item_id, namespace, md_key', multipleColIndex.value)
 
         DataClass ciTable = dataClasses.find {it.label == "catalogue_item"}
-        assertEquals("CI Number of columns/dataElements", 10, ciTable.getChildDataElements().size())
+        assertEquals("CI Number of columns/dataElements", 10, ciTable.getDataElements().size())
         assertEquals("CI Number of metadata", 4, ciTable.metadata.size())
 
         assertTrue("CI All metadata values are valid", ciTable.metadata.every {it.value && it.key != it.value})
@@ -81,7 +81,7 @@ class SqlServerDatabaseDataModelImporterProviderServiceTest extends BaseDatabase
 
 
         DataClass cuTable = dataClasses.find {it.label == "catalogue_user"}
-        assertEquals("CU Number of columns/dataElements", 18, cuTable.getChildDataElements().size())
+        assertEquals("CU Number of columns/dataElements", 18, cuTable.getDataElements().size())
         assertEquals("CU Number of metadata", 5, cuTable.metadata.size())
 
         assertTrue("CU All metadata values are valid", cuTable.metadata.every {it.value && it.key != it.value})
@@ -93,10 +93,10 @@ class SqlServerDatabaseDataModelImporterProviderServiceTest extends BaseDatabase
         assertEquals("Unique Constraint", 1, cuTable.metadata.count {it.key.startsWith 'unique['})
 
         // Columns
-        assertTrue("Metadata all elements required", metadataTable.childDataElements.every {it.minMultiplicity == 1})
-        assertEquals("CI mandatory elements", 9, ciTable.childDataElements.count {it.minMultiplicity == 1})
-        assertEquals("CI optional element description", 0, ciTable.findChildDataElement('description').minMultiplicity)
-        assertEquals("CU mandatory elements", 10, cuTable.childDataElements.count {it.minMultiplicity == 1})
+        assertTrue("Metadata all elements required", metadataTable.dataElements.every {it.minMultiplicity == 1})
+        assertEquals("CI mandatory elements", 9, ciTable.dataElements.count {it.minMultiplicity == 1})
+        assertEquals("CI optional element description", 0, ciTable.findDataElement('description').minMultiplicity)
+        assertEquals("CU mandatory elements", 10, cuTable.dataElements.count {it.minMultiplicity == 1})
 
     }
 }
