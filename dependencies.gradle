@@ -1,9 +1,7 @@
 dependencies {
     implementation group: 'uk.ac.ox.softeng.maurodatamapper', name: 'mdm-core', version: mdmCoreVersion
     implementation group: 'uk.ac.ox.softeng.maurodatamapper', name: 'mdm-plugin-datamodel', version: mdmPluginDataModelVersion
-
     implementation group: 'uk.ac.ox.softeng.maurodatamapper.plugins', name: 'mdm-plugin-database', version: mdmPluginDatabaseVersion
-    implementation group: 'uk.ac.ox.softeng.maurodatamapper.plugins', name: 'mdm-plugin-testing-utils', version: mdmPluginTestUtilsVersion
 
     implementation group: 'org.codehaus.groovy', name: 'groovy-all', version: groovyVersion
     implementation group: 'org.slf4j', name: 'slf4j-api', version: slf4jVersion
