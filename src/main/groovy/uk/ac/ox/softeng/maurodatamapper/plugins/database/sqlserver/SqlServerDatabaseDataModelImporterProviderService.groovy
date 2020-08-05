@@ -29,7 +29,7 @@ class SqlServerDatabaseDataModelImporterProviderService extends AbstractDatabase
 
     @Override
     String getVersion() {
-        '2.1.0'
+        '3.0.0-SNAPSHOT'
     }
 
     @Override
