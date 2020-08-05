@@ -11,4 +11,6 @@ dependencies {
 
     implementation group: 'com.microsoft.sqlserver', name: 'mssql-jdbc', version: sqlServerJdbcVersion
     implementation group: 'net.sourceforge.jtds', name: 'jtds', version: jtdsVersion
+
+    testImplementation group: 'uk.ac.ox.softeng.maurodatamapper.plugins', name: 'mdm-plugin-testing-utils', version: mdmPluginTestUtilsVersion
 }
