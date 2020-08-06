@@ -12,14 +12,10 @@ import java.sql.Connection
 import java.sql.PreparedStatement
 
 @Slf4j
+// @CompileStatic
 class SqlServerDatabaseDataModelImporterProviderService
     extends AbstractDatabaseDataModelImporterProviderService<SqlServerDatabaseDataModelImporterProviderServiceParameters>
     implements RemoteDatabaseDataModelImporterProviderService {
-
-    @Override
-    String getDatabaseStructureQueryString() {
-        'SELECT * FROM INFORMATION_SCHEMA.COLUMNS;'
-    }
 
     @Override
     String getDisplayName() {
@@ -29,14 +25,6 @@ class SqlServerDatabaseDataModelImporterProviderService
     @Override
     String getVersion() {
         '3.0.0-SNAPSHOT'
-    }
-
-    @Override
-    void updateDataModelWithDatabaseSpecificInformation(DataModel dataModel, Connection connection) {
-        addStandardConstraintInformation dataModel, connection
-        addPrimaryKeyAndUniqueConstraintInformation dataModel, connection
-        addIndexInformation dataModel, connection
-        addForeignKeyInformation dataModel, connection
     }
 
     @Override
@@ -85,38 +73,47 @@ class SqlServerDatabaseDataModelImporterProviderService
     }
 
     @Override
-    PreparedStatement prepareCoreStatement(Connection connection, SqlServerDatabaseDataModelImporterProviderServiceParameters params) {
-        PreparedStatement st
-        if (params.schemaNames) {
-            List<String> names = params.schemaNames.split(',')
-            String sb = """SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA IN (${names.collect {'?'}.join(',')});"""
-            st = connection.prepareStatement(sb)
-            names.eachWithIndex {String entry, int i ->
-                st.setString i + 1, entry
-            }
-            return st
-        }
-        super.prepareCoreStatement connection, params
+    String getDatabaseStructureQueryString() {
+        'SELECT * FROM INFORMATION_SCHEMA.COLUMNS;'
+    }
+
+    @Override
+    PreparedStatement prepareCoreStatement(Connection connection, SqlServerDatabaseDataModelImporterProviderServiceParameters parameters) {
+        if (!parameters.schemaNames) return super.prepareCoreStatement(connection, parameters)
+        final List<String> names = parameters.schemaNames.split(',') as List<String>
+        final PreparedStatement statement = connection.prepareStatement(
+            """SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA IN (${names.collect {'?'}.join(',')});""")
+        names.eachWithIndex {String name, int i -> statement.setString(i + 1, name)}
+        statement
     }
 
     List<DataModel> importAndUpdateDataModelsFromResults(
-        User currentUser, String databaseName, SqlServerDatabaseDataModelImporterProviderServiceParameters params,
-        Folder folder, String modelName, List<Map<String, Object>> results, Connection connection) {
-        if (!params.getImportSchemasAsSeparateModels()) {
-            return super.importAndUpdateDataModelsFromResults(currentUser, databaseName, params, folder, modelName, results, connection)
+        User currentUser, String databaseName, SqlServerDatabaseDataModelImporterProviderServiceParameters parameters,
+        Folder folder, String modelName, StatementExecutionResults results, Connection connection) {
+        if (!parameters.importSchemasAsSeparateModels) {
+            return super.importAndUpdateDataModelsFromResults(currentUser, databaseName, parameters, folder, modelName, results, connection)
         }
 
         log.debug 'Importing all schemas as separate DataModels'
-        Map<String, List<Map<String, Object>>> groupedSchemas = results.groupBy {row ->
-            row.get(getSchemaNameColumnName()) as String
-        }
+        final Map<String, StatementExecutionResults> groupedSchemas = results.groupBy {row -> row[schemaNameColumnName] as String}
 
-        groupedSchemas.collect {schema, schemaResults ->
+        groupedSchemas.collect {String schema, StatementExecutionResults schemaResults ->
             log.debug 'Importing database {} schema {}', databaseName, schema
-            DataModel dataModel = importDataModelFromResults(currentUser, folder, schema, params.getDatabaseDialect(), schemaResults, false)
-            if (params.dataModelNameSuffix) dataModel.aliasesString = databaseName
-            updateDataModelWithDatabaseSpecificInformation dataModel, connection
+            final DataModel dataModel = importDataModelFromResults(currentUser, folder, schema, parameters.databaseDialect, schemaResults, false)
+            if (parameters.dataModelNameSuffix) dataModel.aliasesString = databaseName
+            updateDataModelWithDatabaseSpecificInformation(dataModel, connection)
             dataModel
+        }
+    }
+
+    private static trait StatementExecutionResults implements List<StatementExecutionResultsRow> {
+        @Override
+        abstract boolean add(StatementExecutionResultsRow statementExecutionResultsRow)
+    }
+
+    private static trait StatementExecutionResultsRow implements Map<String, Object> {
+        String call(String columnName) {
+            this[columnName] as String
         }
     }
 }

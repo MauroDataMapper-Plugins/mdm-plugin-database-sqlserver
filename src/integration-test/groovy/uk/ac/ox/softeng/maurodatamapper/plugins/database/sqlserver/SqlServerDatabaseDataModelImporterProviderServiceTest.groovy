@@ -11,17 +11,9 @@ import static org.junit.Assert.assertEquals
 import static org.junit.Assert.assertNotNull
 import static org.junit.Assert.assertTrue
 
+// @CompileStatic
 class SqlServerDatabaseDataModelImporterProviderServiceTest
     extends BaseDatabasePluginTest<SqlServerDatabaseDataModelImporterProviderServiceParameters, SqlServerDatabaseDataModelImporterProviderService> {
-
-    @Override
-    SqlServerDatabaseDataModelImporterProviderServiceParameters createDatabaseImportParameters() {
-        SqlServerDatabaseDataModelImporterProviderServiceParameters params = new SqlServerDatabaseDataModelImporterProviderServiceParameters()
-        params.setDatabaseNames 'msdb'
-        params.setDatabaseUsername 'sa'
-        params.setDatabasePassword 'yourStrong(!)Password'
-        params
-    }
 
     @Override
     String getDatabasePortPropertyName() {
@@ -33,60 +25,57 @@ class SqlServerDatabaseDataModelImporterProviderServiceTest
         1433
     }
 
+    @Override
+    SqlServerDatabaseDataModelImporterProviderServiceParameters createDatabaseImportParameters() {
+        new SqlServerDatabaseDataModelImporterProviderServiceParameters().tap {
+            databaseNames = 'msdb'
+            databaseUsername = 'sa'
+            databasePassword = 'yourStrong(!)Password'
+        }
+    }
+
     @Test
     void testImportSimpleDatabase() {
-        SqlServerDatabaseDataModelImporterProviderServiceParameters params = createDatabaseImportParameters(databaseHost, databasePort)
-        params.setDatabaseNames 'metadata_simple'
+        final DataModel dataModel = importDataModelAndRetrieveFromDatabase(
+            createDatabaseImportParameters(databaseHost, databasePort).tap {databaseNames = 'metadata_simple'})
+        assertEquals 'Database/Model name', 'metadata_simple', dataModel.label
+        assertEquals 'Number of columntypes/datatypes', 10, dataModel.dataTypes?.size()
+        assertEquals 'Number of primitive types', 8, dataModel.dataTypes.findAll {it.domainType == 'PrimitiveType'}.size()
+        assertEquals 'Number of reference types', 2, dataModel.dataTypes.findAll {it.domainType == 'ReferenceType'}.size()
+        assertEquals 'Number of tables/dataclasses', 4, dataModel.dataClasses?.size()
+        assertEquals 'Number of child tables/dataclasses', 1, dataModel.childDataClasses?.size()
 
-        DataModel dataModel = importDataModelAndRetrieveFromDatabase(params)
+        final DataClass publicSchema = dataModel.childDataClasses.first()
+        assertEquals 'Number of child tables/dataclasses', 3, publicSchema.dataClasses?.size()
 
-        assertEquals 'Database/Model name', 'metadata_simple', dataModel.getLabel()
-        assertEquals 'Number of columntypes/datatypes', 10, dataModel.getDataTypes()?.size()
-
-        assertEquals 'Number of primitive types', 8, dataModel.getDataTypes().findAll {it.domainType == 'PrimitiveType'}.size()
-        assertEquals 'Number of reference types', 2, dataModel.getDataTypes().findAll {it.domainType == 'ReferenceType'}.size()
-
-        assertEquals 'Number of tables/dataclasses', 4, dataModel.getDataClasses()?.size()
-        assertEquals 'Number of child tables/dataclasses', 1, dataModel.getChildDataClasses()?.size()
-        Set<DataClass> childDataClasses = dataModel.getChildDataClasses()
-        DataClass publicSchema = childDataClasses.first()
-
-        assertEquals 'Number of child tables/dataclasses', 3, publicSchema.getDataClasses()?.size()
-
-        Set<DataClass> dataClasses = publicSchema.dataClasses
+        final Set<DataClass> dataClasses = publicSchema.dataClasses
 
         // Tables
-        DataClass metadataTable = dataClasses.find {it.label == 'metadata'}
-        assertEquals 'Metadata Number of columns/dataElements', 10, metadataTable.getDataElements().size()
+        final DataClass metadataTable = dataClasses.find {it.label == 'metadata'}
+        assertEquals 'Metadata Number of columns/dataElements', 10, metadataTable.dataElements.size()
         assertEquals 'Metadata Number of metadata', 5, metadataTable.metadata.size()
-
         assertTrue 'MD All metadata values are valid', metadataTable.metadata.every {it.value && it.key != it.value}
-
         assertEquals 'MD Primary key', 1, metadataTable.metadata.count {it.key.startsWith 'primary_key'}
         assertEquals 'MD Primary indexes', 1, metadataTable.metadata.count {it.key.startsWith 'primary_index'}
         assertEquals 'MD Unique indexes', 1, metadataTable.metadata.count {it.key.startsWith 'unique_index'}
         assertEquals 'MD Indexes', 2, metadataTable.metadata.count {it.key.startsWith 'index'}
 
-        Metadata multipleColIndex = metadataTable.metadata.find {it.key.contains 'unique_item_id_namespace_key'}
+        final Metadata multipleColIndex = metadataTable.metadata.find {it.key.contains 'unique_item_id_namespace_key'}
         assertNotNull 'Should have multi column index', multipleColIndex
         assertEquals 'Correct order of columns', 'catalogue_item_id, namespace, md_key', multipleColIndex.value
 
-        DataClass ciTable = dataClasses.find {it.label == 'catalogue_item'}
-        assertEquals 'CI Number of columns/dataElements', 10, ciTable.getDataElements().size()
+        final DataClass ciTable = dataClasses.find {it.label == 'catalogue_item'}
+        assertEquals 'CI Number of columns/dataElements', 10, ciTable.dataElements.size()
         assertEquals 'CI Number of metadata', 4, ciTable.metadata.size()
-
         assertTrue 'CI All metadata values are valid', ciTable.metadata.every {it.value && it.key != it.value}
-
         assertEquals 'Primary key', 1, ciTable.metadata.count {it.key.startsWith 'primary_key'}
         assertEquals 'Primary indexes', 1, ciTable.metadata.count {it.key.startsWith 'primary_index'}
         assertEquals 'Indexes', 2, ciTable.metadata.count {it.key.startsWith 'index'}
 
-        DataClass cuTable = dataClasses.find {it.label == 'catalogue_user'}
-        assertEquals 'CU Number of columns/dataElements', 18, cuTable.getDataElements().size()
+        final DataClass cuTable = dataClasses.find {it.label == 'catalogue_user'}
+        assertEquals 'CU Number of columns/dataElements', 18, cuTable.dataElements.size()
         assertEquals 'CU Number of metadata', 5, cuTable.metadata.size()
-
         assertTrue 'CU All metadata values are valid', cuTable.metadata.every {it.value && it.key != it.value}
-
         assertEquals 'Primary key', 1, cuTable.metadata.count {it.key.startsWith 'primary_key'}
         assertEquals 'Primary indexes', 1, cuTable.metadata.count {it.key.startsWith 'primary_index'}
         assertEquals 'Unique indexes', 1, cuTable.metadata.count {it.key.startsWith 'unique_index'}

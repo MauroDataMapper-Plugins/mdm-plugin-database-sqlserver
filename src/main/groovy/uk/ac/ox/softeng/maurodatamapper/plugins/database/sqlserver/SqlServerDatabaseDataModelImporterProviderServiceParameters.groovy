@@ -4,14 +4,14 @@ import uk.ac.ox.softeng.maurodatamapper.core.provider.importer.parameter.config.
 import uk.ac.ox.softeng.maurodatamapper.core.provider.importer.parameter.config.ImportParameterConfig
 import uk.ac.ox.softeng.maurodatamapper.plugins.database.DatabaseDataModelImporterProviderServiceParameters
 
-import com.google.common.base.Strings
 import com.microsoft.sqlserver.jdbc.SQLServerDataSource
 import net.sourceforge.jtds.jdbcx.JtdsDataSource
 
 import groovy.util.logging.Slf4j
 
 @Slf4j
-public class SqlServerDatabaseDataModelImporterProviderServiceParameters extends DatabaseDataModelImporterProviderServiceParameters<JtdsDataSource> {
+// @CompileStatic
+class SqlServerDatabaseDataModelImporterProviderServiceParameters extends DatabaseDataModelImporterProviderServiceParameters<JtdsDataSource> {
 
     @ImportParameterConfig(
         displayName = 'Domain Name',
@@ -22,7 +22,7 @@ public class SqlServerDatabaseDataModelImporterProviderServiceParameters extends
             order = 1
         )
     )
-    private String domain
+    String domain
 
     @ImportParameterConfig(
         displayName = 'Import Schemas as Separate DataModels',
@@ -36,7 +36,7 @@ public class SqlServerDatabaseDataModelImporterProviderServiceParameters extends
             order = 2
         )
     )
-    private Boolean importSchemasAsSeparateModels
+    Boolean importSchemasAsSeparateModels
 
     @ImportParameterConfig(
         displayName = 'Database Schema/s',
@@ -50,7 +50,7 @@ public class SqlServerDatabaseDataModelImporterProviderServiceParameters extends
             order = 2
         )
     )
-    private String schemaNames
+    String schemaNames
 
     @ImportParameterConfig(
         displayName = 'SQL Server Instance',
@@ -64,7 +64,7 @@ public class SqlServerDatabaseDataModelImporterProviderServiceParameters extends
             order = 1
         )
     )
-    private String serverInstance
+    String serverInstance
 
     @ImportParameterConfig(
         displayName = 'Use NTLMv2',
@@ -75,114 +75,67 @@ public class SqlServerDatabaseDataModelImporterProviderServiceParameters extends
             order = 1
         )
     )
-    private Boolean useNtlmv2
+    Boolean useNtlmv2
 
-    @Override
-    public int getDefaultPort() {
-        return 1433
+    boolean getImportSchemasAsSeparateModels() {
+        importSchemasAsSeparateModels ?: false
     }
 
-    @Override
-    public String getDatabaseDialect() {
-        return 'MS SQL Server'
-    }
-
-    public String getSchemaNames() {
-        return schemaNames
-    }
-
-    public void setSchemaNames(String schemaNames) {
-        this.schemaNames = schemaNames
-    }
-
-    @Override
-    JtdsDataSource getDataSource(String databaseName) {
-        getJtdsDataSource databaseName
-    }
-
-    @Override
-    public String getUrl(String databaseName) {
-        return 'UNKNOWN'
+    boolean getUseNtlmv2() {
+        useNtlmv2 ?: false
     }
 
     @Override
     void populateFromProperties(Properties properties) {
         super.populateFromProperties properties
+        domain = properties.getProperty 'import.database.jtds.domain'
         schemaNames = properties.getProperty 'import.database.schemas'
         useNtlmv2 = properties.getProperty('import.database.jtds.useNtlmv2') as Boolean
-        domain = properties.getProperty 'import.database.jtds.domain'
     }
 
-    public String getDomain() {
-        return domain
+    @Override
+    JtdsDataSource getDataSource(String databaseName) {
+        log.debug 'DataSource connection url using JTDS [NTLMv2: {}, Domain: {}]', getUseNtlmv2(), domain
+        new JtdsDataSource().tap {
+            setServerName databaseHost
+            setPortNumber databasePort
+            setDatabaseName databaseName
+            if (domain) setDomain domain
+            if (serverInstance) setInstance serverInstance
+            if (getUseNtlmv2()) setUseNTLMV2 getUseNtlmv2()
+        }
     }
 
-    public void setDomain(String domain) {
-        this.domain = domain
+    @Override
+    String getUrl(String databaseName) {
+        'UNKNOWN'
     }
 
-    public Boolean getImportSchemasAsSeparateModels() {
-        if (importSchemasAsSeparateModels != null)
-            return importSchemasAsSeparateModels
-        else
-            return false
+    @Override
+    String getDatabaseDialect() {
+        'MS SQL Server'
     }
 
-    public void setUseNtlmv2(Boolean useNtlmv2) {
-        this.useNtlmv2 = useNtlmv2
-    }
-
-    public void setImportSchemasAsSeparateModels(Boolean importSchemasAsSeparateModels) {
-        this.importSchemasAsSeparateModels = importSchemasAsSeparateModels
-    }
-
-    public String getServerInstance() {
-        return serverInstance
-    }
-
-    public void setServerInstance(String serverInstance) {
-        this.serverInstance = serverInstance
-    }
-
-    public Boolean getUseNtlmv2() {
-        if (useNtlmv2 != null)
-            return useNtlmv2
-        else
-            return false
-    }
-
-    private JtdsDataSource getJtdsDataSource(String databaseName) {
-        JtdsDataSource dataSource = new JtdsDataSource()
-        dataSource.setServerName getDatabaseHost()
-        dataSource.setPortNumber getDatabasePort()
-        dataSource.setDatabaseName databaseName
-
-        if (!Strings.isNullOrEmpty(getServerInstance())) dataSource.setInstance getServerInstance()
-        if (getUseNtlmv2()) dataSource.setUseNTLMV2 getUseNtlmv2()
-        if (getDomain() != null) dataSource.setDomain getDomain()
-
-        log.debug 'DataSource connection url using JTDS [NTLMv2: {}, Domain: {}]', getUseNtlmv2(), getDomain()
-
-        return dataSource
+    @Override
+    int getDefaultPort() {
+        1433
     }
 
     /**
      * There seem to be issues connecting to the Oxnet mssql servers using the sqlserver driver. However the JTDS one works, as such we've replaced
      * the driver. Leaving this method in here as we may provide an option in the future to use either driver.
      */
+    @SuppressWarnings('UnusedPrivateMethod')
     private SQLServerDataSource getSqlServerDataSource(String databaseName) {
-        SQLServerDataSource dataSource = new SQLServerDataSource()
-        dataSource.setServerName getDatabaseHost()
-        dataSource.setPortNumber getDatabasePort()
-        dataSource.setDatabaseName databaseName
-
-        if (getDatabaseSSL()) {
-            dataSource.setEncrypt true
-            dataSource.setTrustServerCertificate true
+        log.debug 'DataSource connection using SQLServer'
+        new SQLServerDataSource().tap {
+            setServerName databaseHost
+            setPortNumber databasePort
+            setDatabaseName databaseName
+            if (databaseSSL) {
+                setEncrypt true
+                setTrustServerCertificate true
+            }
         }
-
-        log.info 'DataSource connection using SQLServer'
-
-        return dataSource
     }
 }
