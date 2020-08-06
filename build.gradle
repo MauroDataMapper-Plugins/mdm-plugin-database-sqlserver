@@ -47,7 +47,7 @@ jar {
 license {
     header file('NOTICE')
     strictCheck true
-    exclude 'dbtest.properties' // See https://github.com/hierynomus/license-gradle-plugin/issues/145
+    excludes(['dbtest.properties', 'logback.groovy']) // See https://github.com/hierynomus/license-gradle-plugin/issues/145
 }
 
 integrationTest {
