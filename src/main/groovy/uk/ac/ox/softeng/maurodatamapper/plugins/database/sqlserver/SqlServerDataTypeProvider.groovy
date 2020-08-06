@@ -4,10 +4,8 @@ import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.DataTypeService
 import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.PrimitiveType
 import uk.ac.ox.softeng.maurodatamapper.datamodel.rest.transport.DefaultDataType
 
-/**
- * @since 19/04/2018
- */
 class SqlServerDataTypeProvider extends DataTypeService {
+
     @Override
     List<DefaultDataType> getDefaultListOfDataTypes() {
         [
@@ -67,7 +65,6 @@ class SqlServerDataTypeProvider extends DataTypeService {
             new PrimitiveType(label: 'xml', description: 'Stores XML formatted data. Maximum 2GB'),
             new PrimitiveType(label: 'cursor', description: 'Stores a reference to a cursor used for database operations'),
             new PrimitiveType(label: 'table', description: 'Stores a result-set for later processing'),
-
         ]
     }
 

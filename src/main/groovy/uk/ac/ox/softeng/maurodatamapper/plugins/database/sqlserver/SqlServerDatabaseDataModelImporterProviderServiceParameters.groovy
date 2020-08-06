@@ -1,169 +1,169 @@
 package uk.ac.ox.softeng.maurodatamapper.plugins.database.sqlserver
 
-import groovy.util.logging.Slf4j;
-import uk.ac.ox.softeng.maurodatamapper.core.provider.importer.parameter.config.ImportGroupConfig;
-import uk.ac.ox.softeng.maurodatamapper.core.provider.importer.parameter.config.ImportParameterConfig;
-import uk.ac.ox.softeng.maurodatamapper.plugins.database.DatabaseDataModelImporterProviderServiceParameters;
+import uk.ac.ox.softeng.maurodatamapper.core.provider.importer.parameter.config.ImportGroupConfig
+import uk.ac.ox.softeng.maurodatamapper.core.provider.importer.parameter.config.ImportParameterConfig
+import uk.ac.ox.softeng.maurodatamapper.plugins.database.DatabaseDataModelImporterProviderServiceParameters
 
-import com.google.common.base.Strings;
-import com.microsoft.sqlserver.jdbc.SQLServerDataSource;
-import net.sourceforge.jtds.jdbcx.JtdsDataSource;
+import com.google.common.base.Strings
+import com.microsoft.sqlserver.jdbc.SQLServerDataSource
+import net.sourceforge.jtds.jdbcx.JtdsDataSource
 
-import java.util.Properties;
+import groovy.util.logging.Slf4j
 
-/**
- * Created by james on 31/05/2017.
- */
 @Slf4j
 public class SqlServerDatabaseDataModelImporterProviderServiceParameters extends DatabaseDataModelImporterProviderServiceParameters<JtdsDataSource> {
 
     @ImportParameterConfig(
-        displayName = "Domain Name",
-        description = "User domain name. This should be used rather than prefixing the username with <DOMAIN>/<username>.",
+        displayName = 'Domain Name',
+        description = 'User domain name. This should be used rather than prefixing the username with <DOMAIN>/<username>.',
         optional = true,
         group = @ImportGroupConfig(
-            name = "Database Connection Details",
+            name = 'Database Connection Details',
             order = 1
         )
     )
-    private String domain;
+    private String domain
+
     @ImportParameterConfig(
-        displayName = "Import Schemas as Separate DataModels",
+        displayName = 'Import Schemas as Separate DataModels',
         description = [
-            "Import the schemas found (or defined) as individual DataModels.",
-            "Each schema DataModel will be imported with the name of the schema."],
-        optional = true,
+            'Import the schemas found (or defined) as individual DataModels.',
+            'Each schema DataModel will be imported with the name of the schema.'],
         order = 3,
+        optional = true,
         group = @ImportGroupConfig(
-            name = "Database Import Details",
+            name = 'Database Import Details',
             order = 2
         )
     )
-    private Boolean importSchemasAsSeparateModels;
+    private Boolean importSchemasAsSeparateModels
+
     @ImportParameterConfig(
-        displayName = "Database Schema/s",
+        displayName = 'Database Schema/s',
         description = [
-            "A comma-separated list of the schema names to import.",
-            "If not supplied then all schemas other than 'sys' and 'INFORMATION_SCHEMA' will be imported."],
-        optional = true,
+            'A comma-separated list of the schema names to import.',
+            'If not supplied then all schemas other than "sys" and "INFORMATION_SCHEMA" will be imported.'],
         order = 2,
+        optional = true,
         group = @ImportGroupConfig(
-            name = "Database Import Details",
+            name = 'Database Import Details',
             order = 2
         )
     )
-    private String schemaNames;
+    private String schemaNames
+
     @ImportParameterConfig(
-        displayName = "SQL Server Instance",
+        displayName = 'SQL Server Instance',
         description = [
-            "The name of the SQL Server Instance.",
-            "This only needs to be supplied if the server is running an instance with a different name to the server."],
-        optional = true,
+            'The name of the SQL Server Instance.',
+            'This only needs to be supplied if the server is running an instance with a different name to the server.'],
         order = 2,
-        group = @ImportGroupConfig(
-            name = "Database Connection Details",
-            order = 1
-        )
-    )
-    private String serverInstance;
-    @ImportParameterConfig(
-        displayName = "Use NTLMv2",
-        description = "Whether to use NLTMv2 when connecting to the database. Default is false.",
         optional = true,
         group = @ImportGroupConfig(
-            name = "Database Connection Details",
+            name = 'Database Connection Details',
             order = 1
         )
     )
-    private Boolean useNtlmv2;
+    private String serverInstance
+
+    @ImportParameterConfig(
+        displayName = 'Use NTLMv2',
+        description = 'Whether to use NLTMv2 when connecting to the database. Default is false.',
+        optional = true,
+        group = @ImportGroupConfig(
+            name = 'Database Connection Details',
+            order = 1
+        )
+    )
+    private Boolean useNtlmv2
 
     @Override
     public int getDefaultPort() {
-        return 1433;
+        return 1433
     }
 
     @Override
     public String getDatabaseDialect() {
-        return "MS SQL Server";
+        return 'MS SQL Server'
     }
 
     public String getSchemaNames() {
-        return schemaNames;
+        return schemaNames
     }
 
     public void setSchemaNames(String schemaNames) {
-        this.schemaNames = schemaNames;
+        this.schemaNames = schemaNames
     }
 
     @Override
-    public JtdsDataSource getDataSource(String databaseName) {
-        return getJtdsDataSource(databaseName);
+    JtdsDataSource getDataSource(String databaseName) {
+        getJtdsDataSource databaseName
     }
 
     @Override
     public String getUrl(String databaseName) {
-        return "UNKNOWN";
+        return 'UNKNOWN'
     }
 
     @Override
-    public void populateFromProperties(Properties properties) {
-        super.populateFromProperties(properties);
-        schemaNames = properties.getProperty("import.database.schemas");
-        useNtlmv2 = Boolean.parseBoolean(properties.getProperty("import.database.jtds.useNtlmv2"));
-        domain = properties.getProperty("import.database.jtds.domain");
+    void populateFromProperties(Properties properties) {
+        super.populateFromProperties properties
+        schemaNames = properties.getProperty 'import.database.schemas'
+        useNtlmv2 = properties.getProperty('import.database.jtds.useNtlmv2') as Boolean
+        domain = properties.getProperty 'import.database.jtds.domain'
     }
 
     public String getDomain() {
-        return domain;
+        return domain
     }
 
     public void setDomain(String domain) {
-        this.domain = domain;
+        this.domain = domain
     }
 
     public Boolean getImportSchemasAsSeparateModels() {
         if (importSchemasAsSeparateModels != null)
-            return importSchemasAsSeparateModels;
+            return importSchemasAsSeparateModels
         else
-            return false;
+            return false
     }
 
     public void setUseNtlmv2(Boolean useNtlmv2) {
-        this.useNtlmv2 = useNtlmv2;
+        this.useNtlmv2 = useNtlmv2
     }
 
     public void setImportSchemasAsSeparateModels(Boolean importSchemasAsSeparateModels) {
-        this.importSchemasAsSeparateModels = importSchemasAsSeparateModels;
+        this.importSchemasAsSeparateModels = importSchemasAsSeparateModels
     }
 
     public String getServerInstance() {
-        return serverInstance;
+        return serverInstance
     }
 
     public void setServerInstance(String serverInstance) {
-        this.serverInstance = serverInstance;
+        this.serverInstance = serverInstance
     }
 
     public Boolean getUseNtlmv2() {
         if (useNtlmv2 != null)
-            return useNtlmv2;
+            return useNtlmv2
         else
-            return false;
+            return false
     }
 
     private JtdsDataSource getJtdsDataSource(String databaseName) {
-        JtdsDataSource dataSource = new JtdsDataSource();
-        dataSource.setServerName(getDatabaseHost());
-        dataSource.setPortNumber(getDatabasePort());
-        dataSource.setDatabaseName(databaseName);
+        JtdsDataSource dataSource = new JtdsDataSource()
+        dataSource.setServerName getDatabaseHost()
+        dataSource.setPortNumber getDatabasePort()
+        dataSource.setDatabaseName databaseName
 
-        if (!Strings.isNullOrEmpty(getServerInstance())) dataSource.setInstance(getServerInstance());
-        if (getUseNtlmv2()) dataSource.setUseNTLMV2(getUseNtlmv2());
-        if (getDomain() != null) dataSource.setDomain(getDomain());
+        if (!Strings.isNullOrEmpty(getServerInstance())) dataSource.setInstance getServerInstance()
+        if (getUseNtlmv2()) dataSource.setUseNTLMV2 getUseNtlmv2()
+        if (getDomain() != null) dataSource.setDomain getDomain()
 
-        log.debug("DataSource connection url using JTDS [NTLMv2: {}, Domain: {}]", getUseNtlmv2(), getDomain());
+        log.debug 'DataSource connection url using JTDS [NTLMv2: {}, Domain: {}]', getUseNtlmv2(), getDomain()
 
-        return dataSource;
+        return dataSource
     }
 
     /**
@@ -171,21 +171,18 @@ public class SqlServerDatabaseDataModelImporterProviderServiceParameters extends
      * the driver. Leaving this method in here as we may provide an option in the future to use either driver.
      */
     private SQLServerDataSource getSqlServerDataSource(String databaseName) {
-        SQLServerDataSource dataSource = new SQLServerDataSource();
-        dataSource.setServerName(getDatabaseHost());
-        dataSource.setPortNumber(getDatabasePort());
-        dataSource.setDatabaseName(databaseName);
+        SQLServerDataSource dataSource = new SQLServerDataSource()
+        dataSource.setServerName getDatabaseHost()
+        dataSource.setPortNumber getDatabasePort()
+        dataSource.setDatabaseName databaseName
 
         if (getDatabaseSSL()) {
-            dataSource.setEncrypt(true);
-            dataSource.setTrustServerCertificate(true);
+            dataSource.setEncrypt true
+            dataSource.setTrustServerCertificate true
         }
 
-        //dataSource.setIntegratedSecurity(true);
-        //dataSource.setAuthenticationScheme("JavaKerberos");
+        log.info 'DataSource connection using SQLServer'
 
-        log.info("DataSource connection using SQLServer");
-
-        return dataSource;
+        return dataSource
     }
 }
