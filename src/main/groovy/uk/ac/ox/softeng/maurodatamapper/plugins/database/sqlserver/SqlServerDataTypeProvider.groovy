@@ -94,6 +94,6 @@ class SqlServerDataTypeProvider extends DataTypeService {
          [label: 'xml', description: 'Stores XML formatted data. Maximum 2GB'],
          [label: 'cursor', description: 'Stores a reference to a cursor used for database operations'],
          [label: 'table', description: 'Stores a result-set for later processing'],
-        ].collect {properties -> new DefaultDataType(new PrimitiveType(properties))}
+        ].collect {Map<String, String> properties -> new DefaultDataType(new PrimitiveType(properties))}
     }
 }

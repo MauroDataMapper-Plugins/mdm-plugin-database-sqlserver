@@ -71,7 +71,9 @@ class SqlServerDatabaseDataModelImporterProviderServiceTest
         final DataClass metadataTable = dataClasses.find {it.label == 'metadata'}
         assertEquals 'Metadata Number of columns/dataElements', 10, metadataTable.dataElements.size()
         assertEquals 'Metadata Number of metadata', 5, metadataTable.metadata.size()
+
         assertTrue 'MD All metadata values are valid', metadataTable.metadata.every {it.value && it.key != it.value}
+
         assertEquals 'MD Primary key', 1, metadataTable.metadata.count {it.key.startsWith 'primary_key'}
         assertEquals 'MD Primary indexes', 1, metadataTable.metadata.count {it.key.startsWith 'primary_index'}
         assertEquals 'MD Unique indexes', 1, metadataTable.metadata.count {it.key.startsWith 'unique_index'}
@@ -84,7 +86,9 @@ class SqlServerDatabaseDataModelImporterProviderServiceTest
         final DataClass ciTable = dataClasses.find {it.label == 'catalogue_item'}
         assertEquals 'CI Number of columns/dataElements', 10, ciTable.dataElements.size()
         assertEquals 'CI Number of metadata', 4, ciTable.metadata.size()
+
         assertTrue 'CI All metadata values are valid', ciTable.metadata.every {it.value && it.key != it.value}
+
         assertEquals 'Primary key', 1, ciTable.metadata.count {it.key.startsWith 'primary_key'}
         assertEquals 'Primary indexes', 1, ciTable.metadata.count {it.key.startsWith 'primary_index'}
         assertEquals 'Indexes', 2, ciTable.metadata.count {it.key.startsWith 'index'}
@@ -92,7 +96,9 @@ class SqlServerDatabaseDataModelImporterProviderServiceTest
         final DataClass cuTable = dataClasses.find {it.label == 'catalogue_user'}
         assertEquals 'CU Number of columns/dataElements', 18, cuTable.dataElements.size()
         assertEquals 'CU Number of metadata', 5, cuTable.metadata.size()
+
         assertTrue 'CU All metadata values are valid', cuTable.metadata.every {it.value && it.key != it.value}
+
         assertEquals 'Primary key', 1, cuTable.metadata.count {it.key.startsWith 'primary_key'}
         assertEquals 'Primary indexes', 1, cuTable.metadata.count {it.key.startsWith 'primary_index'}
         assertEquals 'Unique indexes', 1, cuTable.metadata.count {it.key.startsWith 'unique_index'}

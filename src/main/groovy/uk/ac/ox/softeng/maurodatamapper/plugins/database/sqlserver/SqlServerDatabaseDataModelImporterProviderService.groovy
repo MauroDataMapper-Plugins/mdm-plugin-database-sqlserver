@@ -104,33 +104,22 @@ class SqlServerDatabaseDataModelImporterProviderService
         statement
     }
 
-    List<DataModel> importAndUpdateDataModelsFromResults(
-        User currentUser, String databaseName, SqlServerDatabaseDataModelImporterProviderServiceParameters parameters,
-        Folder folder, String modelName, StatementExecutionResults results, Connection connection) {
+    List<DataModel> importAndUpdateDataModelsFromResults(User currentUser, String databaseName,
+                                                         SqlServerDatabaseDataModelImporterProviderServiceParameters parameters, Folder folder,
+                                                         String modelName, List<Map<String, Object>> results, Connection connection) {
         if (!parameters.importSchemasAsSeparateModels) {
             return super.importAndUpdateDataModelsFromResults(currentUser, databaseName, parameters, folder, modelName, results, connection)
         }
 
         log.debug 'Importing all schemas as separate DataModels'
-        final Map<String, StatementExecutionResults> groupedSchemas = results.groupBy {row -> row[schemaNameColumnName] as String}
+        final Map<String, List<Map<String, Object>>> groupedSchemas = results.groupBy {row -> row[schemaNameColumnName] as String}
 
-        groupedSchemas.collect {String schema, StatementExecutionResults schemaResults ->
+        groupedSchemas.collect {String schema, List<Map<String, Object>> schemaResults ->
             log.debug 'Importing database {} schema {}', databaseName, schema
             final DataModel dataModel = importDataModelFromResults(currentUser, folder, schema, parameters.databaseDialect, schemaResults, false)
             if (parameters.dataModelNameSuffix) dataModel.aliasesString = databaseName
             updateDataModelWithDatabaseSpecificInformation(dataModel, connection)
             dataModel
-        }
-    }
-
-    private static trait StatementExecutionResults implements List<StatementExecutionResultsRow> {
-        @Override
-        abstract boolean add(StatementExecutionResultsRow statementExecutionResultsRow)
-    }
-
-    private static trait StatementExecutionResultsRow implements Map<String, Object> {
-        String call(String columnName) {
-            this[columnName] as String
         }
     }
 }

@@ -37,8 +37,7 @@ class SqlServerDatabaseDataModelImporterProviderServiceParameters extends Databa
         group = @ImportGroupConfig(
             name = 'Database Connection Details',
             order = 1
-        )
-    )
+        ))
     String domain
 
     @ImportParameterConfig(
@@ -51,8 +50,7 @@ class SqlServerDatabaseDataModelImporterProviderServiceParameters extends Databa
         group = @ImportGroupConfig(
             name = 'Database Import Details',
             order = 2
-        )
-    )
+        ))
     Boolean importSchemasAsSeparateModels
 
     @ImportParameterConfig(
@@ -65,8 +63,7 @@ class SqlServerDatabaseDataModelImporterProviderServiceParameters extends Databa
         group = @ImportGroupConfig(
             name = 'Database Import Details',
             order = 2
-        )
-    )
+        ))
     String schemaNames
 
     @ImportParameterConfig(
@@ -79,8 +76,7 @@ class SqlServerDatabaseDataModelImporterProviderServiceParameters extends Databa
         group = @ImportGroupConfig(
             name = 'Database Connection Details',
             order = 1
-        )
-    )
+        ))
     String serverInstance
 
     @ImportParameterConfig(
@@ -90,8 +86,7 @@ class SqlServerDatabaseDataModelImporterProviderServiceParameters extends Databa
         group = @ImportGroupConfig(
             name = 'Database Connection Details',
             order = 1
-        )
-    )
+        ))
     Boolean useNtlmv2
 
     boolean getImportSchemasAsSeparateModels() {
@@ -112,8 +107,7 @@ class SqlServerDatabaseDataModelImporterProviderServiceParameters extends Databa
 
     @Override
     JtdsDataSource getDataSource(String databaseName) {
-        log.debug 'DataSource connection url using JTDS [NTLMv2: {}, Domain: {}]', getUseNtlmv2(), domain
-        new JtdsDataSource().tap {
+        final JtdsDataSource dataSource = new JtdsDataSource().tap {
             setServerName databaseHost
             setPortNumber databasePort
             setDatabaseName databaseName
@@ -121,6 +115,8 @@ class SqlServerDatabaseDataModelImporterProviderServiceParameters extends Databa
             if (serverInstance) setInstance serverInstance
             if (getUseNtlmv2()) setUseNTLMV2 getUseNtlmv2()
         }
+        log.debug 'DataSource connection url using JTDS [NTLMv2: {}, Domain: {}]', getUseNtlmv2(), domain
+        dataSource
     }
 
     @Override

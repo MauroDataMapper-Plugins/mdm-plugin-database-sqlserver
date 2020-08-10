@@ -23,7 +23,7 @@ class SqlServerDatabasePlugin extends AbstractMauroDataMapperPlugin {
 
     @Override
     String getName() {
-        'Plugin : Database - SQLServer'
+        'Plugin : Database - SQL Server'
     }
 
     @Override
