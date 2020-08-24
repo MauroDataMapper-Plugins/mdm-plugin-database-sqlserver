@@ -19,14 +19,20 @@ package uk.ac.ox.softeng.maurodatamapper.plugins.database.sqlserver
 
 import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.DataTypeService
 import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.PrimitiveType
+import uk.ac.ox.softeng.maurodatamapper.datamodel.provider.DefaultDataTypeProvider
 import uk.ac.ox.softeng.maurodatamapper.datamodel.rest.transport.DefaultDataType
 
 // @CompileStatic
-class SqlServerDataTypeProvider extends DataTypeService {
+class SqlServerDataTypeProvider implements DefaultDataTypeProvider {
 
     @Override
     String getDisplayName() {
         'Transact-SQL / MSSQL DataTypes'
+    }
+
+    @Override
+    String getVersion() {
+        '3.0.0-SNAPSHOT'
     }
 
     @Override
