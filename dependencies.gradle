@@ -1,6 +1,6 @@
 dependencies {
     implementation group: 'uk.ac.ox.softeng.maurodatamapper', name: 'mdm-core', version: mdmCoreVersion
-    implementation group: 'uk.ac.ox.softeng.maurodatamapper', name: 'mdm-plugin-datamodel', version: mdmPluginDataModelVersion
+    implementation group: 'uk.ac.ox.softeng.maurodatamapper', name: 'mdm-plugin-datamodel', version: mdmCoreVersion
     implementation group: 'uk.ac.ox.softeng.maurodatamapper.plugins', name: 'mdm-plugin-database', version: mdmPluginDatabaseVersion
 
     implementation group: 'org.codehaus.groovy', name: 'groovy-all', version: groovyVersion
@@ -11,4 +11,10 @@ dependencies {
     implementation group: 'net.sourceforge.jtds', name: 'jtds', version: jtdsVersion
 
     testImplementation group: 'uk.ac.ox.softeng.maurodatamapper.plugins', name: 'mdm-plugin-testing-utils', version: mdmPluginTestUtilsVersion
+
+    // Postgres database
+    runtime group: 'org.flywaydb', name: 'flyway-core'
+    runtime "org.hibernate:hibernate-jcache"
+    runtime group: 'org.ehcache', name: 'ehcache'
+    runtime group: 'org.postgresql', name: 'postgresql'
 }

@@ -81,28 +81,28 @@ pipeline {
             }
         }
 
-        stage('Static Code Analysis') {
-            steps {
-                sh "./gradlew -PciRun=true staticCodeAnalysis"
-            }
-            post {
-                always {
-                    checkstyle canComputeNew: false, defaultEncoding: '', healthy: '0', pattern: '**/build/reports/checkstyle/*.xml', unHealthy: ''
-                    findbugs canComputeNew: false, defaultEncoding: '', excludePattern: '', healthy: '0', includePattern: '', pattern:'**/build/reports/spotbugs/*.xml', unHealthy: ''
-                    pmd canComputeNew: false, defaultEncoding: '', healthy: '0', pattern: '**/build/reports/pmd/*.xml', unHealthy: ''
-                    publishHTML(
-                        target: [
-                            allowMissing         : false,
-                            alwaysLinkToLastBuild: false,
-                            keepAll              : true,
-                            reportDir            : 'build/reports/codenarc',
-                            reportFiles          : 'main.html',
-                            reportName           : "Codenarc Report"
-                        ]
-                    )
-                }
-            }
-        }
+//        stage('Static Code Analysis') {
+//            steps {
+//                sh "./gradlew -PciRun=true staticCodeAnalysis"
+//            }
+//            post {
+//                always {
+//                    checkstyle canComputeNew: false, defaultEncoding: '', healthy: '0', pattern: '**/build/reports/checkstyle/*.xml', unHealthy: ''
+//                    findbugs canComputeNew: false, defaultEncoding: '', excludePattern: '', healthy: '0', includePattern: '', pattern:'**/build/reports/spotbugs/*.xml', unHealthy: ''
+//                    pmd canComputeNew: false, defaultEncoding: '', healthy: '0', pattern: '**/build/reports/pmd/*.xml', unHealthy: ''
+//                    publishHTML(
+//                        target: [
+//                            allowMissing         : false,
+//                            alwaysLinkToLastBuild: false,
+//                            keepAll              : true,
+//                            reportDir            : 'build/reports/codenarc',
+//                            reportFiles          : 'main.html',
+//                            reportName           : "Codenarc Report"
+//                        ]
+//                    )
+//                }
+//            }
+//        }
 
         stage('License Header Check'){
             steps{
