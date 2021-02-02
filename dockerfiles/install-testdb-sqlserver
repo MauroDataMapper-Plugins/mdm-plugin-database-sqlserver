@@ -1,0 +1,5 @@
+#!/bin/bash
+
+# Create the test databases
+cd /data/metadata_catalogue_testing
+sqlcmd -U sa -P 'yourStrong(!)Password' -i sqlserver_create_simple.sql
