@@ -35,19 +35,10 @@ apply plugin: 'ox.softeng.ox-brc-standard'
 apply plugin: 'ox.softeng.ox-brc-artifactory'
 apply plugin: 'ox.softeng.ox-brc-grails-reliant'
 apply plugin: 'ox.softeng.integration-test'
-
-apply from: 'dependencies.gradle'
-
-sca.ciEnabled ciRun.toBoolean()
+apply plugin: 'ox.softeng.static-code-analysis'
 
 jar {
     exclude 'logback.groovy'
-}
-
-license {
-    header file('NOTICE')
-    strictCheck true
-    excludes(['dbtest.properties', 'logback.groovy']) // See https://github.com/hierynomus/license-gradle-plugin/issues/145
 }
 
 integrationTest {
@@ -79,9 +70,6 @@ afterEvaluate {
     if (project.hasProperty('mainClass')) {
         applicationDefaultJvmArgs += "-Dmc.logFileName=${applicationName}"
         applicationDefaultJvmArgs += '-Dgrails.env=CUSTOM'
-        project.installDist {
-            into project.file("/opt/mdm-plugins/${project.distributions.main.getBaseName()}")
-        }
     }
 
     /*
@@ -111,3 +99,7 @@ afterEvaluate {
 
     tasks.withType(Test, runConfig)
 }
+
+apply from: 'dependencies.gradle'
+apply from: "${projectDir}/gradle/additions/mdm.gradle"
+apply from: "${projectDir}/gradle/additions/staticCodeAnalysis.gradle"
