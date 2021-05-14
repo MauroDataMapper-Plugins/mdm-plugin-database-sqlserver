@@ -1,0 +1,40 @@
+import java.lang.management.ManagementFactory
+import java.lang.management.RuntimeMXBean
+
+task('sysProps') {
+    group 'help'
+    doLast {
+        logger.quiet('{}', System.properties.collect {"${it.key}:${it.value}"}.sort().join('\n'))
+    }
+}
+
+task('jvmArgs') {
+    group 'help'
+    doLast {
+        RuntimeMXBean runtimeMxBean2 = ManagementFactory.getRuntimeMXBean()
+        logger.quiet('{}', runtimeMxBean2.getInputArguments().join('\n'))
+    }
+}
+
+license {
+    header = file("${rootDir}/NOTICE")
+    excludes([
+        '**/*.gson',
+        '**/*.yml',
+        '**/META-INF/**',
+        '**/*.txt',
+        '**/*.json',
+        '**/*.gml',
+        '**/*.jpeg',
+        '**/*.png',
+        '**/*.xml',
+        '**/*.sql',
+        '**/*.csv',
+    ])
+}
+
+afterEvaluate {
+    tasks.withType(Test) {testTask ->
+        ignoreFailures = System.getenv().containsKey('JENKINS')
+    }
+}
