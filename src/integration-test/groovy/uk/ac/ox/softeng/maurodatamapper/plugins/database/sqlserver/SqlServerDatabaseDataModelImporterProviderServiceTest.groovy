@@ -49,8 +49,8 @@ class SqlServerDatabaseDataModelImporterProviderServiceTest
             databaseNames = 'msdb'
             databaseUsername = 'sa'
             databasePassword = 'yourStrong(!)Password'
-            authenticationScheme = 'ntlm'
-            integratedSecurity = true
+            authenticationScheme = 'nativeAuthentication'
+            integratedSecurity = false
         }
     }
 
