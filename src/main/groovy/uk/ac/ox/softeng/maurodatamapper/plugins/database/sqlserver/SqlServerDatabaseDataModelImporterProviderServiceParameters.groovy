@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 University of Oxford and Health and Social Care Information Centre, also known as NHS Digital
+ * Copyright 2020-2021 University of Oxford and Health and Social Care Information Centre, also known as NHS Digital
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,21 +23,13 @@ import uk.ac.ox.softeng.maurodatamapper.plugins.database.DatabaseDataModelImport
 
 import com.microsoft.sqlserver.jdbc.SQLServerDataSource
 import groovy.util.logging.Slf4j
-import net.sourceforge.jtds.jdbcx.JtdsDataSource
+
+import javax.sql.DataSource
 
 @Slf4j
 // @CompileStatic
-class SqlServerDatabaseDataModelImporterProviderServiceParameters extends DatabaseDataModelImporterProviderServiceParameters<JtdsDataSource> {
+class SqlServerDatabaseDataModelImporterProviderServiceParameters extends DatabaseDataModelImporterProviderServiceParameters<SQLServerDataSource> {
 
-    @ImportParameterConfig(
-        displayName = 'Domain Name',
-        description = 'User domain name. This should be used rather than prefixing the username with <DOMAIN>/<username>.',
-        optional = true,
-        group = @ImportGroupConfig(
-            name = 'Database Connection Details',
-            order = 1
-        ))
-    String domain
 
     @ImportParameterConfig(
         displayName = 'Import Schemas as Separate DataModels',
@@ -66,61 +58,70 @@ class SqlServerDatabaseDataModelImporterProviderServiceParameters extends Databa
     String schemaNames
 
     @ImportParameterConfig(
+        displayName = 'Authentication Scheme',
+        description = ['Authentication scheme to use, options are [nativeAuthentication, ntlm, javaKerberos].',
+            'If anything other than nativeAuthentication is used integratedSecurity will be set to "true". Default is NTLM.'],
+        order = 1,
+        group = @ImportGroupConfig(
+            name = 'SQLServer DataSource Connection Details',
+            order = 1
+        ))
+    String authenticationScheme
+
+    @ImportParameterConfig(
+        displayName = 'Integrated Security',
+        description = ['Use integrated security?',
+            'If anything other than nativeAuthentication is used as authentication schema then integratedSecurity will be set to "true".'],
+        order = 2,
+        group = @ImportGroupConfig(
+            name = 'SQLServer DataSource Connection Details',
+            order = 1
+        ))
+    Boolean integratedSecurity
+
+    @ImportParameterConfig(
+        displayName = 'Domain Name',
+        description = 'User domain name. This should be used rather than prefixing the username with <DOMAIN>/<username>.',
+        order = 3,
+        optional = true,
+        group = @ImportGroupConfig(
+            name = 'SQLServer DataSource Connection Details',
+            order = 1
+        ))
+    String domain
+
+    @ImportParameterConfig(
         displayName = 'SQL Server Instance',
         description = [
             'The name of the SQL Server Instance.',
-            'This only needs to be supplied if the server is running an instance with a different name to the server.'],
-        order = 2,
+            'This only needs to be supplied if the server is running an instance with a different name to the server hostname.'],
+        order = 4,
         optional = true,
         group = @ImportGroupConfig(
-            name = 'Database Connection Details',
+            name = 'SQLServer DataSource Connection Details',
             order = 1
         ))
     String serverInstance
 
-    @ImportParameterConfig(
-        displayName = 'Use NTLMv2',
-        description = 'Whether to use NLTMv2 when connecting to the database. Default is false.',
-        optional = true,
-        group = @ImportGroupConfig(
-            name = 'Database Connection Details',
-            order = 1
-        ))
-    Boolean useNtlmv2
 
     boolean getImportSchemasAsSeparateModels() {
         importSchemasAsSeparateModels ?: false
     }
 
-    boolean getUseNtlmv2() {
-        useNtlmv2 ?: false
-    }
-
     @Override
     void populateFromProperties(Properties properties) {
         super.populateFromProperties properties
-        domain = properties.getProperty 'import.database.jtds.domain'
         schemaNames = properties.getProperty 'import.database.schemas'
-        useNtlmv2 = properties.getProperty('import.database.jtds.useNtlmv2') as Boolean
     }
 
     @Override
-    JtdsDataSource getDataSource(String databaseName) {
-        final JtdsDataSource dataSource = new JtdsDataSource().tap {
-            setServerName databaseHost
-            setPortNumber databasePort
-            setDatabaseName databaseName
-            if (domain) setDomain domain
-            if (serverInstance) setInstance serverInstance
-            if (getUseNtlmv2()) setUseNTLMV2 getUseNtlmv2()
-        }
-        log.debug 'DataSource connection url using JTDS [NTLMv2: {}, Domain: {}]', getUseNtlmv2(), domain
-        dataSource
+    SQLServerDataSource getDataSource(String databaseName) {
+        getSqlServerDataSource(databaseName)
     }
 
     @Override
     String getUrl(String databaseName) {
-        'UNKNOWN'
+        getDataSource(databaseName).getURL()
     }
 
     @Override
@@ -133,21 +134,29 @@ class SqlServerDatabaseDataModelImporterProviderServiceParameters extends Databa
         1433
     }
 
-    /**
-     * There seem to be issues connecting to the Oxnet mssql servers using the sqlserver driver. However the JTDS one works, as such we've replaced
-     * the driver. Leaving this method in here as we may provide an option in the future to use either driver.
-     */
-    @SuppressWarnings('UnusedPrivateMethod')
-    private SQLServerDataSource getSqlServerDataSource(String databaseName) {
+    SQLServerDataSource getSqlServerDataSource(String databaseName) {
         log.debug 'DataSource connection using SQLServer'
         new SQLServerDataSource().tap {
             setServerName databaseHost
             setPortNumber databasePort
             setDatabaseName databaseName
+            setTrustServerCertificate true
+
+            String authScheme = getAuthenticationScheme() ?: 'ntlm'
+            if (!(authScheme.toLowerCase() in ['nativeauthentication', 'ntlm', 'javakerberos'])) authScheme = 'ntlm'
+            setAuthenticationScheme(authScheme)
+
+            if (authScheme.toLowerCase() == 'nativeauthentication'){
+                setIntegratedSecurity getIntegratedSecurity()
+            }else{
+                setIntegratedSecurity true
+            }
+
+            if (serverInstance) setInstanceName(serverInstance)
             if (databaseSSL) {
                 setEncrypt true
-                setTrustServerCertificate true
             }
+            setApplicationName('Mauro-Data-Mapper')
         }
     }
 }

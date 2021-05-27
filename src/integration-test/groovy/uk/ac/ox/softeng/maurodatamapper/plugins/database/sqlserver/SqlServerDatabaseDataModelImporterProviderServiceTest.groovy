@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 University of Oxford and Health and Social Care Information Centre, also known as NHS Digital
+ * Copyright 2020-2021 University of Oxford and Health and Social Care Information Centre, also known as NHS Digital
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import uk.ac.ox.softeng.maurodatamapper.datamodel.DataModel
 import uk.ac.ox.softeng.maurodatamapper.datamodel.item.DataClass
 import uk.ac.ox.softeng.maurodatamapper.plugins.testing.utils.BaseDatabasePluginTest
 
+import org.junit.Ignore
 import org.junit.Test
 
 import static org.junit.Assert.assertEquals
@@ -48,7 +49,30 @@ class SqlServerDatabaseDataModelImporterProviderServiceTest
             databaseNames = 'msdb'
             databaseUsername = 'sa'
             databasePassword = 'yourStrong(!)Password'
+            authenticationScheme = 'nativeAuthentication'
+            integratedSecurity = false
         }
+    }
+
+    @Test
+    @Ignore('no credentials')
+    void testConnectionToOuh(){
+        SqlServerDatabaseDataModelImporterProviderServiceParameters params = new SqlServerDatabaseDataModelImporterProviderServiceParameters().tap {
+            databaseHost = 'oxnetdwp01.oxnet.nhs.uk'
+            domain = 'OXNET'
+            authenticationScheme = 'ntlm'
+            integratedSecurity = true
+            databaseUsername = ''
+            databasePassword = ''
+            databaseNames = 'LIMS'
+            schemaNames = 'raw'
+            databaseSSL = false
+            folderId =getTestFolder().getId()
+        }
+
+        DataModel lims = importDataModelAndRetrieveFromDatabase(params)
+
+        assert lims
     }
 
     @Test
