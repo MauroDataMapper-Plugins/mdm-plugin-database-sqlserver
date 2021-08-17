@@ -59,7 +59,7 @@ pluginManagement {
 If using Intellij, go to Preferences > Build Tools and choose to reload the project after Any changes.
 
 To run tests:
-```./gradlew --build-cache integrationTest``  
+```./gradlew --build-cache integrationTest```
 
 With debug:
 ```./gradlew --build-cache integrationTest --debug-jvm```  
