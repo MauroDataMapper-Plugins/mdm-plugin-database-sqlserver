@@ -19,6 +19,7 @@ package uk.ac.ox.softeng.maurodatamapper.plugins.database.sqlserver
 
 import uk.ac.ox.softeng.maurodatamapper.core.container.Folder
 import uk.ac.ox.softeng.maurodatamapper.datamodel.DataModel
+import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.DataType
 import uk.ac.ox.softeng.maurodatamapper.plugins.database.AbstractDatabaseDataModelImporterProviderService
 import uk.ac.ox.softeng.maurodatamapper.plugins.database.RemoteDatabaseDataModelImporterProviderService
 import uk.ac.ox.softeng.maurodatamapper.security.User
@@ -92,6 +93,23 @@ class SqlServerDatabaseDataModelImporterProviderService
     @Override
     String getDatabaseStructureQueryString() {
         'SELECT * FROM INFORMATION_SCHEMA.COLUMNS;'
+    }
+
+    //SQL Server square bracket escaping of identifiers
+    @Override
+    String countDistinctColumnValuesQueryString(String tableName, String columnName) {
+        "SELECT COUNT(DISTINCT([${columnName}])) AS count FROM [${tableName}];"
+    }
+
+    //SQL Server square bracket escaping of identifiers
+    @Override
+    String distinctColumnValuesQueryString(String tableName, String columnName) {
+        "SELECT DISTINCT([${columnName}]) AS distinct_value FROM [${tableName}];"
+    }
+
+    @Override
+    boolean isColumnPossibleEnumeration(DataType dataType) {
+        dataType.domainType == 'PrimitiveType' && (dataType.label == "char" || dataType.label == "varchar")
     }
 
     @Override
