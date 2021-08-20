@@ -141,3 +141,20 @@ INSERT INTO organisation(id, org_name, org_type, org_code, description, org_char
 (38, 'ORG38', 'TYPEB', 'CODEX', 'Description of ORG38', 'CHAR3'),
 (39, 'ORG39', 'TYPEB', 'CODEX', 'Description of ORG39', 'CHAR3'),
 (40, 'ORG40', 'TYPEB', 'CODER', 'Description of ORG40', 'CHAR3');
+
+CREATE TABLE sample
+(
+  id INT NOT NULL PRIMARY KEY IDENTITY,
+  sample_smallint SMALLINT,
+  sample_int INT,
+  sample_bigint BIGINT
+);
+
+--sample data: sample_smallint goes from -100 to 100. sample_int goes from 0 to 10000.
+--sample_bigint goes from -1000000 to 1000000
+WITH populate AS (
+SELECT -100 AS x UNION ALL SELECT x + 1 FROM populate WHERE x < 100
+)
+INSERT INTO sample (sample_smallint, sample_int, sample_bigint)
+SELECT x, x*x, x*x*x FROM populate
+OPTION (MAXRECURSION 0);

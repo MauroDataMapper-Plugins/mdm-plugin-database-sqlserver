@@ -22,6 +22,7 @@ import uk.ac.ox.softeng.maurodatamapper.datamodel.DataModel
 import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.DataType
 import uk.ac.ox.softeng.maurodatamapper.plugins.database.AbstractDatabaseDataModelImporterProviderService
 import uk.ac.ox.softeng.maurodatamapper.plugins.database.RemoteDatabaseDataModelImporterProviderService
+import uk.ac.ox.softeng.maurodatamapper.plugins.database.summarymetadata.IntegerIntervalHelper
 import uk.ac.ox.softeng.maurodatamapper.security.User
 
 import groovy.util.logging.Slf4j
@@ -110,6 +111,43 @@ class SqlServerDatabaseDataModelImporterProviderService
     @Override
     boolean isColumnPossibleEnumeration(DataType dataType) {
         dataType.domainType == 'PrimitiveType' && (dataType.label == "char" || dataType.label == "varchar")
+    }
+
+    @Override
+    boolean isColumnForIntegerSummary(DataType dataType) {
+        dataType.label == "smallint" || dataType.label == "int" || dataType.label == "bigint"
+    }
+
+    @Override
+    String minMaxColumnValuesQueryString(String tableName, String columnName) {
+        "SELECT MIN([${columnName}]) AS min_value, MAX([${columnName}]) AS max_value FROM [${tableName}];"
+    }
+
+    /**
+     * The 5 bind parameters in the returned query are:
+     * 1. start value of first interval
+     * 2. interval width
+     * 3. start value of last interval
+     * 4. interval width
+     * 5. interval width
+     * @param tableName
+     * @param columnName
+     * @param integerIntervalHelper
+     * @return
+     */
+    @Override
+    String integerRangeDistributionQueryString(String tableName, String columnName) {
+        '''
+        WITH #bucket AS (
+            SELECT ? AS x 
+            UNION ALL SELECT x + ? FROM #bucket WHERE x < ?
+        )
+        SELECT x AS interval_start, x + ? AS interval_end, COUNT(sample_bigint) AS count_interval
+        FROM #bucket
+        LEFT JOIN
+        sample ON sample.sample_bigint >= #bucket.x AND sample.sample_bigint < #bucket.x + ?
+        GROUP BY x;
+        '''.stripIndent()
     }
 
     @Override

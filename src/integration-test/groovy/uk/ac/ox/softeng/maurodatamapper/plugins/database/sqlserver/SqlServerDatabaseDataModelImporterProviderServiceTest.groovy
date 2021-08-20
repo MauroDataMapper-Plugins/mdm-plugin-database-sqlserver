@@ -284,4 +284,16 @@ class SqlServerDatabaseDataModelImporterProviderServiceTest
         assertNotNull 'Enumeration value found', orgCharEnumerationType.enumerationValues.find{it.key == 'CHAR3'}
         assertNull 'Not an expected value', orgCharEnumerationType.enumerationValues.find{it.key == 'CHAR4'}
     }
+
+    @Test
+    void 'S01 testImportSimpleDatabaseWithSummaryMetadata'() {
+        final DataModel dataModel = importDataModelAndRetrieveFromDatabase(
+                createDatabaseImportParameters(databaseHost, databasePort).tap {
+                    databaseNames = 'metadata_simple';
+                    detectEnumerations = true;
+                    maxEnumerations = 20;
+                    calculateSummaryMetadata = true;
+                })
+
+    }
 }
