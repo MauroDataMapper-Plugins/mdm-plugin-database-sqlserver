@@ -13,6 +13,11 @@ docker run --rm -d \
  mcr.microsoft.com/mssql/server:2019-latest
 ```
 
+Note that the above image does not run on Apple silicon (M1). Use azure-sql-edge instead:
+```bash
+docker run --rm -d -e 'ACCEPT_EULA=Y' -e 'SA_PASSWORD=yourStrong(!)Password' -p 1433:1433 --name sqlserver2019 mcr.microsoft.com/azure-sql-edge:latest
+ ```
+
 The available tags can be found [here](https://hub.docker.com/_/microsoft-mssql-server) if you want a different version.
 
 ## Install SqlCmd 
