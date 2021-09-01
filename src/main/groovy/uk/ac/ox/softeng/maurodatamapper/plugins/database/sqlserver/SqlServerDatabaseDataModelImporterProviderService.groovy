@@ -22,13 +22,14 @@ import uk.ac.ox.softeng.maurodatamapper.datamodel.DataModel
 import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.DataType
 import uk.ac.ox.softeng.maurodatamapper.plugins.database.AbstractDatabaseDataModelImporterProviderService
 import uk.ac.ox.softeng.maurodatamapper.plugins.database.RemoteDatabaseDataModelImporterProviderService
-import uk.ac.ox.softeng.maurodatamapper.plugins.database.summarymetadata.IntegerIntervalHelper
+import uk.ac.ox.softeng.maurodatamapper.plugins.database.summarymetadata.AbstractIntervalHelper
 import uk.ac.ox.softeng.maurodatamapper.security.User
 
 import groovy.util.logging.Slf4j
 
 import java.sql.Connection
 import java.sql.PreparedStatement
+import java.time.format.DateTimeFormatter
 
 @Slf4j
 // @CompileStatic
@@ -114,8 +115,18 @@ class SqlServerDatabaseDataModelImporterProviderService
     }
 
     @Override
+    boolean isColumnForDateSummary(DataType dataType) {
+        ["date", "smalldatetime", "datetime", "datetime2"].contains(dataType.label)
+    }
+
+    @Override
+    boolean isColumnForDecimalSummary(DataType dataType) {
+        ["decimal", "numeric"].contains(dataType.label)
+    }
+
+    @Override
     boolean isColumnForIntegerSummary(DataType dataType) {
-        dataType.label == "smallint" || dataType.label == "int" || dataType.label == "bigint"
+        ["tinyint", "smallint", "int", "bigint"].contains(dataType.label)
     }
 
     @Override
@@ -123,31 +134,65 @@ class SqlServerDatabaseDataModelImporterProviderService
         "SELECT MIN([${columnName}]) AS min_value, MAX([${columnName}]) AS max_value FROM [${tableName}];"
     }
 
+    @Override
+    String columnRangeDistributionQueryString(String tableName, String columnName, DataType dataType, AbstractIntervalHelper intervalHelper) {
+        List<String> selects = intervalHelper.intervals.collect {
+            "SELECT '${it.key}' AS interval_label, ${formatDataType(dataType, it.value.aValue)} AS interval_start, ${formatDataType(dataType, it.value.bValue)} AS interval_end"
+        }
+
+        rangeDistributionQueryString(tableName, columnName, selects)
+    }
+
     /**
-     * The 5 bind parameters in the returned query are:
-     * 1. start value of first interval
-     * 2. interval width
-     * 3. start value of last interval
-     * 4. interval width
-     * 5. interval width
+     * Return a string which uses the SQL Server CONVERT function for Dates, otherwise string formatting
+     *
+     * @param dataType
+     * @param value
+     * @return Date formatted as ISO8601 (see
+     * https://docs.microsoft.com/en-us/sql/t-sql/functions/cast-and-convert-transact-sql?view=sql-server-ver15)
+     * or a string
+     */
+    String formatDataType(DataType dataType, Object value) {
+        if (isColumnForDateSummary(dataType)){
+            "CONVERT(DATETIME, '${DateTimeFormatter.ISO_LOCAL_DATE_TIME.format(value)}', 126)"
+        } else {
+            "${value}"
+        }
+    }
+
+    /**
+     * Returns a String that looks, for example, like this:
+     * WITH #interval AS (
+     *   SELECT '0 - 100' AS interval_label, 0 AS interval_start, 100 AS interval_end
+     *   UNION
+     *   SELECT '100 - 200' AS interval_label, 100 AS interval_start, 200 AS interval_end
+     * )
+     * SELECT interval_label, COUNT([my_column]) AS interval_count
+     * FROM #interval
+     * LEFT JOIN
+     * [my_table] ON [my_table].[my_column] >= #interval.interval_start AND [my_table].[my_column] < #interval.interval_end
+     * GROUP BY interval_label, interval_start
+     * ORDER BY interval_start ASC;
+     *
      * @param tableName
      * @param columnName
-     * @param integerIntervalHelper
+     * @param selects
      * @return
      */
-    @Override
-    String integerRangeDistributionQueryString(String tableName, String columnName) {
-        '''
-        WITH #bucket AS (
-            SELECT ? AS x 
-            UNION ALL SELECT x + ? FROM #bucket WHERE x < ?
-        )
-        SELECT x AS interval_start, x + ? AS interval_end, COUNT(sample_bigint) AS count_interval
-        FROM #bucket
+    private String rangeDistributionQueryString(String tableName, String columnName, List<String> selects) {
+        String intervals = selects.join(" UNION ")
+
+        String sql = "WITH #interval AS (${intervals})" +
+                """
+        SELECT interval_label, COUNT([${columnName}]) AS interval_count
+        FROM #interval
         LEFT JOIN
-        sample ON sample.sample_bigint >= #bucket.x AND sample.sample_bigint < #bucket.x + ?
-        GROUP BY x;
-        '''.stripIndent()
+        [${tableName}] ON [${tableName}].[${columnName}] >= #interval.interval_start AND [${tableName}].[${columnName}] < #interval.interval_end
+        GROUP BY interval_label, interval_start
+        ORDER BY interval_start ASC;
+        """
+
+        sql.stripIndent()
     }
 
     @Override
