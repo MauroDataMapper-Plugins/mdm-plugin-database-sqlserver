@@ -39,7 +39,7 @@ In the `dependencies.gradle` file add:
 
 ```groovy
 dependencies {
-    runtimeOnly 'uk.ac.ox.softeng.maurodatamapper.plugins:mdm-plugin-database-sqlserver:6.0.0'
+    runtimeOnly 'uk.ac.ox.softeng.maurodatamapper.plugins:mdm-plugin-database-sqlserver:5.0.0'
 }
 ```
 
