@@ -141,3 +141,27 @@ INSERT INTO organisation(id, org_name, org_type, org_code, description, org_char
 (38, 'ORG38', 'TYPEB', 'CODEX', 'Description of ORG38', 'CHAR3'),
 (39, 'ORG39', 'TYPEB', 'CODEX', 'Description of ORG39', 'CHAR3'),
 (40, 'ORG40', 'TYPEB', 'CODER', 'Description of ORG40', 'CHAR3');
+
+CREATE TABLE sample
+(
+  id INT NOT NULL PRIMARY KEY IDENTITY,
+  sample_tinyint TINYINT,
+  sample_smallint SMALLINT,
+  sample_int INT,
+  sample_bigint BIGINT,
+  sample_decimal DECIMAL(12,3),
+  sample_numeric NUMERIC(10,6),
+  sample_date DATE,
+  sample_smalldatetime SMALLDATETIME,
+  sample_datetime DATETIME,
+  sample_datetime2 DATETIME2
+);
+
+--sample data: sample_smallint goes from -100 to 100. sample_int goes from 0 to 10000.
+--sample_bigint goes from -1000000 to 1000000
+WITH populate AS (
+SELECT -100 AS x UNION ALL SELECT x + 1 FROM populate WHERE x < 100
+)
+INSERT INTO sample (sample_tinyint, sample_smallint, sample_int, sample_bigint, sample_decimal, sample_numeric, sample_date, sample_smalldatetime, sample_datetime, sample_datetime2)
+SELECT ABS(x), x, x*x, x*x*x, x*x * 573, x*x*x / 104756.576, DATEADD(day, x, '2020-09-01'), DATEADD(month, x, '2020-09-01'), DATEADD(year, x, '2020-09-01'), DATEADD(hour, x, '2020-09-01') FROM populate
+OPTION (MAXRECURSION 0);
