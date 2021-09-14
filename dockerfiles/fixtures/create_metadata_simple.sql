@@ -165,3 +165,19 @@ SELECT -100 AS x UNION ALL SELECT x + 1 FROM populate WHERE x < 100
 INSERT INTO sample (sample_tinyint, sample_smallint, sample_int, sample_bigint, sample_decimal, sample_numeric, sample_date, sample_smalldatetime, sample_datetime, sample_datetime2)
 SELECT ABS(x), x, x*x, x*x*x, x*x * 573, x*x*x / 104756.576, DATEADD(day, x, '2020-09-01'), DATEADD(month, x, '2020-09-01'), DATEADD(year, x, '2020-09-01'), DATEADD(hour, x, '2020-09-01') FROM populate
 OPTION (MAXRECURSION 0);
+
+CREATE TABLE bigger_sample (
+sample_bigint BIGINT,
+sample_decimal DECIMAL(12, 3),
+sample_date DATE,
+sample_varchar VARCHAR(20)
+);
+WITH populate AS (
+SELECT 1 AS x UNION ALL SELECT x + 1 FROM populate WHERE x < 500000
+)
+INSERT INTO bigger_sample (sample_bigint) SELECT x FROM populate
+OPTION (MAXRECURSION 0);
+UPDATE bigger_sample
+SET sample_decimal = SIN(sample_bigint),
+sample_date = DATEADD(day, 200 * SIN(sample_bigint), '2020-09-02'),
+sample_varchar = 'ENUM' + CONVERT(VARCHAR(2), sample_bigint % 15);

@@ -119,12 +119,13 @@ class SqlServerDatabaseDataModelImporterProviderServiceTest
          * metadata (child of dbo)
          * organisation (child of dbo)
          * sample (child of dbo)
+         * sample_bigger (child of dbo)
          */
-        assertEquals 'Number of tables/dataclasses', 6, dataModel.dataClasses?.size()
+        assertEquals 'Number of tables/dataclasses', 7, dataModel.dataClasses?.size()
         assertEquals 'Number of child tables/dataclasses', 1, dataModel.childDataClasses?.size()
 
         final DataClass publicSchema = dataModel.childDataClasses.first()
-        assertEquals 'Number of child tables/dataclasses', 5, publicSchema.dataClasses?.size()
+        assertEquals 'Number of child tables/dataclasses', 6, publicSchema.dataClasses?.size()
 
         final Set<DataClass> dataClasses = publicSchema.dataClasses
 
@@ -209,16 +210,16 @@ class SqlServerDatabaseDataModelImporterProviderServiceTest
                     detectEnumerations = true;
                     maxEnumerations = 20})
         assertEquals 'Database/Model name', 'metadata_simple', dataModel.label
-        assertEquals 'Number of columntypes/datatypes', 20, dataModel.dataTypes?.size()
+        assertEquals 'Number of columntypes/datatypes', 21, dataModel.dataTypes?.size()
         assertEquals 'Number of primitive types', 15, dataModel.dataTypes.findAll {it.domainType == 'PrimitiveType'}.size()
         assertEquals 'Number of reference types', 2, dataModel.dataTypes.findAll {it.domainType == 'ReferenceType'}.size()
-        assertEquals 'Number of enumeration types', 3, dataModel.dataTypes.findAll {it.domainType == 'EnumerationType'}.size()
+        assertEquals 'Number of enumeration types', 4, dataModel.dataTypes.findAll {it.domainType == 'EnumerationType'}.size()
         assertEquals 'Number of char datatypes', 0, dataModel.dataTypes.findAll {it.domainType == 'PrimitiveType' && it.label == 'char'}.size()
-        assertEquals 'Number of tables/dataclasses', 6, dataModel.dataClasses?.size()
+        assertEquals 'Number of tables/dataclasses', 7, dataModel.dataClasses?.size()
         assertEquals 'Number of child tables/dataclasses', 1, dataModel.childDataClasses?.size()
 
         final DataClass publicSchema = dataModel.childDataClasses.first()
-        assertEquals 'Number of child tables/dataclasses', 5, publicSchema.dataClasses?.size()
+        assertEquals 'Number of child tables/dataclasses', 6, publicSchema.dataClasses?.size()
 
         final Set<DataClass> dataClasses = publicSchema.dataClasses
 
@@ -328,7 +329,7 @@ class SqlServerDatabaseDataModelImporterProviderServiceTest
                 })
 
         final DataClass publicSchema = dataModel.childDataClasses.first()
-        assertEquals 'Number of child tables/dataclasses', 5, publicSchema.dataClasses?.size()
+        assertEquals 'Number of child tables/dataclasses', 6, publicSchema.dataClasses?.size()
 
         final Set<DataClass> dataClasses = publicSchema.dataClasses
         final DataClass sampleTable = dataClasses.find {it.label == 'sample'}
@@ -400,6 +401,55 @@ class SqlServerDatabaseDataModelImporterProviderServiceTest
         assertEquals 'reportValue for sample_datetime2',
                 '{"27/08/2020 - 28/08/2020":4,"28/08/2020 - 29/08/2020":24,"29/08/2020 - 30/08/2020":24,"30/08/2020 - 31/08/2020":24,"31/08/2020 - 01/09/2020":24,"01/09/2020 - 02/09/2020":24,"02/09/2020 - 03/09/2020":24,"03/09/2020 - 04/09/2020":24,"04/09/2020 - 05/09/2020":24,"05/09/2020 - 06/09/2020":5}',
                 sample_datetime2.summaryMetadata[0].summaryMetadataReports[0].reportValue
+
+    }
+
+    @Test
+    void 'X01 testImportSimpleDatabaseWithSummaryMetadataWithSampling'() {
+        final DataModel dataModel = importDataModelAndRetrieveFromDatabase(
+                createDatabaseImportParameters(databaseHost, databasePort).tap {
+                    databaseNames = 'metadata_simple'
+                    detectEnumerations = true
+                    maxEnumerations = 20
+                    calculateSummaryMetadata = true
+                    sampleThreshold = 1000
+                    samplePercent = 10
+                })
+
+        final DataClass publicSchema = dataModel.childDataClasses.first()
+        assertEquals 'Number of child tables/dataclasses', 6, publicSchema.dataClasses?.size()
+
+        final Set<DataClass> dataClasses = publicSchema.dataClasses
+        final DataClass sampleTable = dataClasses.find {it.label == 'bigger_sample'}
+
+        assertEquals 'Sample Number of columns/dataElements', 4, sampleTable.dataElements.size()
+
+        final DataElement sample_bigint = sampleTable.dataElements.find{it.label == "sample_bigint"}
+        assertEquals 'description of summary metadata for sample_bigint',
+                'Estimated Value Distribution (calculated by sampling 10% of rows)',
+                sample_bigint.summaryMetadata[0].description
+
+        final DataElement sample_decimal = sampleTable.dataElements.find{it.label == "sample_decimal"}
+        assertEquals 'description of summary metadata for sample_decimal',
+                'Estimated Value Distribution (calculated by sampling 10% of rows)',
+                sample_decimal.summaryMetadata[0].description
+
+        final DataElement sample_date = sampleTable.dataElements.find{it.label == "sample_date"}
+        assertEquals 'description of summary metadata for sample_date',
+                'Estimated Value Distribution (calculated by sampling 10% of rows)',
+                sample_date.summaryMetadata[0].description
+
+        /**
+         * Enumeration type determined using a sample, so we can't be certain that there will be exactly 15 results.
+         * But there should be between 1 and 15 values, and any values must be in our expected list.
+         */
+        final EnumerationType sampleVarcharEnumerationType = sampleTable.findDataElement('sample_varchar').dataType
+        assertTrue 'One or more 0 enumeration values', sampleVarcharEnumerationType.enumerationValues.size() >= 1
+        assertTrue '15 or fewer enumeration values', sampleVarcharEnumerationType.enumerationValues.size() <= 15
+        sampleVarcharEnumerationType.enumerationValues.each {
+            assertTrue 'Enumeration key in expected set',
+                    ['ENUM0', 'ENUM1', 'ENUM2', 'ENUM3', 'ENUM4', 'ENUM5', 'ENUM6', 'ENUM7', 'ENUM8', 'ENUM9', 'ENUM10', 'ENUM11', 'ENUM12', 'ENUM13', 'ENUM14'].contains(it.key)
+        }
 
     }
 }
