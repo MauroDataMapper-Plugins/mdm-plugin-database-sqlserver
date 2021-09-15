@@ -83,7 +83,11 @@ class SqlServerDatabaseDataModelImporterProviderServiceTest
     void testImportSimpleDatabase() {
         final DataModel dataModel = importDataModelAndRetrieveFromDatabase(
             createDatabaseImportParameters(databaseHost, databasePort).tap {databaseNames = 'metadata_simple'})
-        assertEquals 'Database/Model name', 'metadata_simple', dataModel.label
+
+        checkBasic(dataModel)
+        checkOrganisationNotEnumerated(dataModel)
+        checkSampleNoSummaryMetadata(dataModel)
+        checkBiggerSampleNoSummaryMetadata(dataModel)
         /**
          * Column types expected are:
          * uniqueidentifier
@@ -110,6 +114,102 @@ class SqlServerDatabaseDataModelImporterProviderServiceTest
         assertEquals 'Number of reference types', 2, dataModel.dataTypes.findAll {it.domainType == 'ReferenceType'}.size()
         assertEquals 'Number of enumeration types', 0, dataModel.dataTypes.findAll {it.domainType == 'EnumerationType'}.size()
         assertEquals 'Number of char datatypes', 1, dataModel.dataTypes.findAll {it.domainType == 'PrimitiveType' && it.label == 'char'}.size()
+    }
+
+    @Test
+    void testImportSimpleDatabaseWithEnumerations() {
+        final DataModel dataModel = importDataModelAndRetrieveFromDatabase(
+                createDatabaseImportParameters(databaseHost, databasePort).tap {
+                    databaseNames = 'metadata_simple';
+                    detectEnumerations = true;
+                    maxEnumerations = 20})
+
+        checkBasic(dataModel)
+        checkOrganisationEnumerated(dataModel)
+        checkSampleNoSummaryMetadata(dataModel)
+        checkBiggerSampleNoSummaryMetadata(dataModel)
+
+        assertEquals 'Number of columntypes/datatypes', 21, dataModel.dataTypes?.size()
+        assertEquals 'Number of primitive types', 15, dataModel.dataTypes.findAll {it.domainType == 'PrimitiveType'}.size()
+        assertEquals 'Number of reference types', 2, dataModel.dataTypes.findAll {it.domainType == 'ReferenceType'}.size()
+        assertEquals 'Number of enumeration types', 4, dataModel.dataTypes.findAll {it.domainType == 'EnumerationType'}.size()
+        assertEquals 'Number of char datatypes', 0, dataModel.dataTypes.findAll {it.domainType == 'PrimitiveType' && it.label == 'char'}.size()
+        assertEquals 'Number of tables/dataclasses', 7, dataModel.dataClasses?.size()
+        assertEquals 'Number of child tables/dataclasses', 1, dataModel.childDataClasses?.size()
+
+    }
+
+    @Test
+    void 'testImportSimpleDatabaseWithSummaryMetadata'() {
+        final DataModel dataModel = importDataModelAndRetrieveFromDatabase(
+                createDatabaseImportParameters(databaseHost, databasePort).tap {
+                    databaseNames = 'metadata_simple';
+                    detectEnumerations = true;
+                    maxEnumerations = 20;
+                    calculateSummaryMetadata = true;
+                })
+
+        checkBasic(dataModel)
+        checkOrganisationEnumerated(dataModel)
+        checkSampleSummaryMetadata(dataModel)
+        checkBiggerSampleSummaryMetadata(dataModel)
+    }
+
+    @Test
+    void 'testImportSimpleDatabaseWithSummaryMetadataWithSampling'() {
+        final DataModel dataModel = importDataModelAndRetrieveFromDatabase(
+                createDatabaseImportParameters(databaseHost, databasePort).tap {
+                    databaseNames = 'metadata_simple'
+                    detectEnumerations = true
+                    maxEnumerations = 20
+                    calculateSummaryMetadata = true
+                    sampleThreshold = 1000
+                    samplePercent = 10
+                })
+
+        checkBasic(dataModel)
+        checkOrganisationEnumerated(dataModel)
+        checkSampleSummaryMetadata(dataModel)
+
+        final DataClass publicSchema = dataModel.childDataClasses.first()
+        assertEquals 'Number of child tables/dataclasses', 6, publicSchema.dataClasses?.size()
+
+        final Set<DataClass> dataClasses = publicSchema.dataClasses
+        final DataClass sampleTable = dataClasses.find {it.label == 'bigger_sample'}
+
+        assertEquals 'Sample Number of columns/dataElements', 4, sampleTable.dataElements.size()
+
+        final DataElement sample_bigint = sampleTable.dataElements.find{it.label == "sample_bigint"}
+        assertEquals 'description of summary metadata for sample_bigint',
+                'Estimated Value Distribution (calculated by sampling 10% of rows)',
+                sample_bigint.summaryMetadata[0].description
+
+        final DataElement sample_decimal = sampleTable.dataElements.find{it.label == "sample_decimal"}
+        assertEquals 'description of summary metadata for sample_decimal',
+                'Estimated Value Distribution (calculated by sampling 10% of rows)',
+                sample_decimal.summaryMetadata[0].description
+
+        final DataElement sample_date = sampleTable.dataElements.find{it.label == "sample_date"}
+        assertEquals 'description of summary metadata for sample_date',
+                'Estimated Value Distribution (calculated by sampling 10% of rows)',
+                sample_date.summaryMetadata[0].description
+
+        /**
+         * Enumeration type determined using a sample, so we can't be certain that there will be exactly 15 results.
+         * But there should be between 1 and 15 values, and any values must be in our expected list.
+         */
+        final EnumerationType sampleVarcharEnumerationType = sampleTable.findDataElement('sample_varchar').dataType
+        assertTrue 'One or more 0 enumeration values', sampleVarcharEnumerationType.enumerationValues.size() >= 1
+        assertTrue '15 or fewer enumeration values', sampleVarcharEnumerationType.enumerationValues.size() <= 15
+        sampleVarcharEnumerationType.enumerationValues.each {
+            assertTrue 'Enumeration key in expected set',
+                    ['ENUM0', 'ENUM1', 'ENUM2', 'ENUM3', 'ENUM4', 'ENUM5', 'ENUM6', 'ENUM7', 'ENUM8', 'ENUM9', 'ENUM10', 'ENUM11', 'ENUM12', 'ENUM13', 'ENUM14'].contains(it.key)
+        }
+
+    }
+
+    private void checkBasic(DataModel dataModel) {
+        assertEquals 'Database/Model name', 'metadata_simple', dataModel.label
 
         /**
          * Expect data classes for:
@@ -188,112 +288,55 @@ class SqlServerDatabaseDataModelImporterProviderServiceTest
         assertEquals 'CI mandatory elements', 9, ciTable.dataElements.count {it.minMultiplicity == 1}
         assertEquals 'CI optional element description', 0, ciTable.findDataElement('description').minMultiplicity
         assertEquals 'CU mandatory elements', 10, cuTable.dataElements.count {it.minMultiplicity == 1}
+    }
 
+    private void checkOrganisationNotEnumerated(DataModel dataModel) {
+        final DataClass publicSchema = dataModel.childDataClasses.first()
+        final Set<DataClass> dataClasses = publicSchema.dataClasses
         final DataClass organisationTable = dataClasses.find {it.label == 'organisation'}
-        assertEquals 'Organisation Number of columns/dataElements', 6, organisationTable.dataElements.size()
+
+        Map<String, String> expectedColumns = [
+                'org_code': 'PrimitiveType',
+                'org_name': 'PrimitiveType',
+                'org_char': 'PrimitiveType',
+                'description': 'PrimitiveType',
+                'org_type': 'PrimitiveType',
+                'id': 'PrimitiveType'
+        ]
+
+        assertEquals 'Organisation Number of columns/dataElements', expectedColumns.size(), organisationTable.dataElements.size()
         // Expect 3 metadata - 2 for the primary key and 1 for indexes
         assertEquals 'Organisation Number of metadata', 3, organisationTable.metadata.size()
         //Expect all types to be Primitive, because we are not detecting enumerations
-        assertEquals 'DomainType of the DataType for org_code', 'PrimitiveType', organisationTable.findDataElement('org_code').dataType.domainType
-        assertEquals 'DomainType of the DataType for org_name', 'PrimitiveType', organisationTable.findDataElement('org_name').dataType.domainType
-        assertEquals 'DomainType of the DataType for org_char', 'PrimitiveType', organisationTable.findDataElement('org_char').dataType.domainType
-        assertEquals 'DomainType of the DataType for description', 'PrimitiveType', organisationTable.findDataElement('description').dataType.domainType
-        assertEquals 'DomainType of the DataType for org_type', 'PrimitiveType', organisationTable.findDataElement('org_type').dataType.domainType
-        assertEquals 'DomainType of the DataType for id', 'PrimitiveType', organisationTable.findDataElement('id').dataType.domainType
+        expectedColumns.each {
+            columnName, columnType ->
+                assertEquals "DomainType of the DataType for ${columnName}", columnType, organisationTable.findDataElement(columnName).dataType.domainType
+        }
     }
 
-    @Test
-    void testImportSimpleDatabaseWithEnumerations() {
-        final DataModel dataModel = importDataModelAndRetrieveFromDatabase(
-                createDatabaseImportParameters(databaseHost, databasePort).tap {
-                    databaseNames = 'metadata_simple';
-                    detectEnumerations = true;
-                    maxEnumerations = 20})
-        assertEquals 'Database/Model name', 'metadata_simple', dataModel.label
-        assertEquals 'Number of columntypes/datatypes', 21, dataModel.dataTypes?.size()
-        assertEquals 'Number of primitive types', 15, dataModel.dataTypes.findAll {it.domainType == 'PrimitiveType'}.size()
-        assertEquals 'Number of reference types', 2, dataModel.dataTypes.findAll {it.domainType == 'ReferenceType'}.size()
-        assertEquals 'Number of enumeration types', 4, dataModel.dataTypes.findAll {it.domainType == 'EnumerationType'}.size()
-        assertEquals 'Number of char datatypes', 0, dataModel.dataTypes.findAll {it.domainType == 'PrimitiveType' && it.label == 'char'}.size()
-        assertEquals 'Number of tables/dataclasses', 7, dataModel.dataClasses?.size()
-        assertEquals 'Number of child tables/dataclasses', 1, dataModel.childDataClasses?.size()
-
+    private void checkOrganisationEnumerated(DataModel dataModel) {
         final DataClass publicSchema = dataModel.childDataClasses.first()
-        assertEquals 'Number of child tables/dataclasses', 6, publicSchema.dataClasses?.size()
-
         final Set<DataClass> dataClasses = publicSchema.dataClasses
-
-        // Tables
-        final DataClass metadataTable = dataClasses.find {it.label == 'metadata'}
-        assertEquals 'Metadata Number of columns/dataElements', 10, metadataTable.dataElements.size()
-        assertEquals 'Metadata Number of metadata', 3, metadataTable.metadata.size()
-
-        assertTrue 'MD All metadata values are valid', metadataTable.metadata.every {it.value && it.key != it.value}
-
-        List<Map> indexesInfo = new JsonSlurper().parseText(metadataTable.metadata.find {it.key == 'indexes'}.value) as List<Map>
-
-        assertEquals('MD Index count', 4, indexesInfo.size())
-
-        assertEquals 'MD Primary key', 1, metadataTable.metadata.count {it.key == 'primary_key_name'}
-        assertEquals 'MD Primary key', 1, metadataTable.metadata.count {it.key == 'primary_key_columns'}
-        assertEquals 'MD Primary indexes', 1, indexesInfo.findAll {it.primaryIndex}.size()
-        assertEquals 'MD Unique indexes', 2, indexesInfo.findAll {it.uniqueIndex}.size()
-        assertEquals 'MD indexes', 2, indexesInfo.findAll {!it.uniqueIndex && !it.primaryIndex}.size()
-
-        final Map multipleColIndex =indexesInfo.find {it.name ==  'unique_item_id_namespace_key'}
-        assertNotNull 'Should have multi column index', multipleColIndex
-        assertEquals 'Correct order of columns', 'catalogue_item_id, namespace, md_key', multipleColIndex.columns
-
-        final DataClass ciTable = dataClasses.find {it.label == 'catalogue_item'}
-        assertEquals 'CI Number of columns/dataElements', 10, ciTable.dataElements.size()
-        assertEquals 'CI Number of metadata', 3, ciTable.metadata.size()
-
-        assertTrue 'CI All metadata values are valid', ciTable.metadata.every {it.value && it.key != it.value}
-
-        indexesInfo = new JsonSlurper().parseText(ciTable.metadata.find {it.key == 'indexes'}.value) as List<Map>
-
-        assertEquals('CI Index count', 3, indexesInfo.size())
-
-        assertEquals 'CI Primary key', 1, ciTable.metadata.count {it.key == 'primary_key_name'}
-        assertEquals 'CI Primary key', 1, ciTable.metadata.count {it.key == 'primary_key_columns'}
-        assertEquals 'CI Primary indexes', 1, indexesInfo.findAll {it.primaryIndex}.size()
-        assertEquals 'CI indexes', 2, indexesInfo.findAll {!it.uniqueIndex && !it.primaryIndex}.size()
-
-        final DataClass cuTable = dataClasses.find {it.label == 'catalogue_user'}
-        assertEquals 'CU Number of columns/dataElements', 18, cuTable.dataElements.size()
-        assertEquals 'CU Number of metadata', 5, cuTable.metadata.size()
-
-        assertTrue 'CU All metadata values are valid', cuTable.metadata.every {it.value && it.key != it.value}
-
-        indexesInfo = new JsonSlurper().parseText(cuTable.metadata.find {it.key == 'indexes'}.value) as List<Map>
-
-        assertEquals('CU Index count', 3, indexesInfo.size())
-
-        assertEquals 'CU Primary key', 1, cuTable.metadata.count {it.key == 'primary_key_name'}
-        assertEquals 'CU Primary key', 1, cuTable.metadata.count {it.key == 'primary_key_columns'}
-        assertEquals 'CI Primary indexes', 1, indexesInfo.findAll {it.primaryIndex}.size()
-        assertEquals 'CI Unique indexes', 2, indexesInfo.findAll {it.uniqueIndex}.size()
-        assertEquals 'CI indexes', 1, indexesInfo.findAll {!it.uniqueIndex && !it.primaryIndex}.size()
-        assertEquals 'CU constraint', 1, cuTable.metadata.count {it.key == 'unique_name'}
-        assertEquals 'CU constraint', 1, cuTable.metadata.count {it.key == 'unique_columns'}
-
-        // Columns
-        assertTrue 'Metadata all elements required', metadataTable.dataElements.every {it.minMultiplicity == 1}
-        assertEquals 'CI mandatory elements', 9, ciTable.dataElements.count {it.minMultiplicity == 1}
-        assertEquals 'CI optional element description', 0, ciTable.findDataElement('description').minMultiplicity
-        assertEquals 'CU mandatory elements', 10, cuTable.dataElements.count {it.minMultiplicity == 1}
-
         final DataClass organisationTable = dataClasses.find {it.label == 'organisation'}
-        assertEquals 'Organisation Number of columns/dataElements', 6, organisationTable.dataElements.size()
+
+        Map<String, String> expectedColumns = [
+                'org_code': 'EnumerationType',
+                'org_name': 'PrimitiveType',
+                'org_char': 'EnumerationType',
+                'description': 'PrimitiveType',
+                'org_type': 'EnumerationType',
+                'id': 'PrimitiveType'
+        ]
+
+        assertEquals 'Organisation Number of columns/dataElements', expectedColumns.size(), organisationTable.dataElements.size()
         // Expect 3 metadata - 2 for the primary key and 1 for indexes
         assertEquals 'Organisation Number of metadata', 3, organisationTable.metadata.size()
-        // Expect org_code, org_char and org_type to have been detected as EnumerationType
-        assertEquals 'DomainType of the DataType for org_code', 'EnumerationType', organisationTable.findDataElement('org_code').dataType.domainType
-        assertEquals 'DomainType of the DataType for org_name', 'PrimitiveType', organisationTable.findDataElement('org_name').dataType.domainType
-        assertEquals 'DomainType of the DataType for org_char', 'EnumerationType', organisationTable.findDataElement('org_char').dataType.domainType
-        assertEquals 'DomainType of the DataType for description', 'PrimitiveType', organisationTable.findDataElement('description').dataType.domainType
-        assertEquals 'DomainType of the DataType for org_type', 'EnumerationType', organisationTable.findDataElement('org_type').dataType.domainType
-        assertEquals 'DomainType of the DataType for id', 'PrimitiveType', organisationTable.findDataElement('id').dataType.domainType
+        //Expect all types to be Primitive, because we are not detecting enumerations
+        expectedColumns.each {
+            columnName, columnType ->
+                assertEquals "DomainType of the DataType for ${columnName}", columnType, organisationTable.findDataElement(columnName).dataType.domainType
+        }
+
 
         final EnumerationType orgCodeEnumerationType = organisationTable.findDataElement('org_code').dataType
         assertEquals 'Number of enumeration values for org_code', 4, orgCodeEnumerationType.enumerationValues.size()
@@ -312,29 +355,65 @@ class SqlServerDatabaseDataModelImporterProviderServiceTest
 
         final EnumerationType orgCharEnumerationType = organisationTable.findDataElement('org_char').dataType
         assertEquals 'Number of enumeration values for org_char', 3, orgCharEnumerationType.enumerationValues.size()
-        assertNotNull 'Enumeration   value found', orgCharEnumerationType.enumerationValues.find{it.key == 'CHAR1'}
+        assertNotNull 'Enumeration value found', orgCharEnumerationType.enumerationValues.find{it.key == 'CHAR1'}
         assertNotNull 'Enumeration value found', orgCharEnumerationType.enumerationValues.find{it.key == 'CHAR2'}
         assertNotNull 'Enumeration value found', orgCharEnumerationType.enumerationValues.find{it.key == 'CHAR3'}
         assertNull 'Not an expected value', orgCharEnumerationType.enumerationValues.find{it.key == 'CHAR4'}
     }
 
-    @Test
-    void 'testImportSimpleDatabaseWithSummaryMetadata'() {
-        final DataModel dataModel = importDataModelAndRetrieveFromDatabase(
-                createDatabaseImportParameters(databaseHost, databasePort).tap {
-                    databaseNames = 'metadata_simple';
-                    detectEnumerations = true;
-                    maxEnumerations = 20;
-                    calculateSummaryMetadata = true;
-                })
-
+    private checkSampleNoSummaryMetadata(DataModel dataModel) {
         final DataClass publicSchema = dataModel.childDataClasses.first()
-        assertEquals 'Number of child tables/dataclasses', 6, publicSchema.dataClasses?.size()
-
         final Set<DataClass> dataClasses = publicSchema.dataClasses
         final DataClass sampleTable = dataClasses.find {it.label == 'sample'}
 
-        assertEquals 'Sample Number of columns/dataElements', 11, sampleTable.dataElements.size()
+        List<String> expectedColumns = [
+                "id",
+                "sample_tinyint",
+                "sample_smallint",
+                "sample_bigint",
+                "sample_int",
+                "sample_decimal",
+                "sample_numeric",
+                "sample_date",
+                "sample_smalldatetime",
+                "sample_datetime",
+                "sample_datetime2"
+        ]
+
+        assertEquals 'Sample Number of columns/dataElements', expectedColumns.size(), sampleTable.dataElements.size()
+
+        expectedColumns.each {columnName ->
+            DataElement de = sampleTable.dataElements.find{it.label == columnName}
+            assertEquals 'Zero summaryMetadata', 0, de.summaryMetadata.size()
+        }
+    }
+
+    private void checkSampleSummaryMetadata(DataModel dataModel) {
+
+        final DataClass publicSchema = dataModel.childDataClasses.first()
+        final Set<DataClass> dataClasses = publicSchema.dataClasses
+        final DataClass sampleTable = dataClasses.find {it.label == 'sample'}
+
+        List<String> expectedColumns = [
+                "id",
+                "sample_tinyint",
+                "sample_smallint",
+                "sample_bigint",
+                "sample_int",
+                "sample_decimal",
+                "sample_numeric",
+                "sample_date",
+                "sample_smalldatetime",
+                "sample_datetime",
+                "sample_datetime2"
+        ]
+
+        assertEquals 'Sample Number of columns/dataElements', expectedColumns.size(), sampleTable.dataElements.size()
+
+        expectedColumns.each {columnName ->
+            DataElement de = sampleTable.dataElements.find{it.label == columnName}
+            assertEquals 'One summaryMetadata', 1, de.summaryMetadata.size()
+        }
 
         final DataElement id = sampleTable.dataElements.find{it.label == "id"}
         //Expect id to have contiguous values from 1 to 201
@@ -404,52 +483,61 @@ class SqlServerDatabaseDataModelImporterProviderServiceTest
 
     }
 
-    @Test
-    void 'X01 testImportSimpleDatabaseWithSummaryMetadataWithSampling'() {
-        final DataModel dataModel = importDataModelAndRetrieveFromDatabase(
-                createDatabaseImportParameters(databaseHost, databasePort).tap {
-                    databaseNames = 'metadata_simple'
-                    detectEnumerations = true
-                    maxEnumerations = 20
-                    calculateSummaryMetadata = true
-                    sampleThreshold = 1000
-                    samplePercent = 10
-                })
-
+    /**
+     * Check that there is a DataClass for the bigger_sample table, with 4 columns but no
+     * summary metadata on any of these columns.
+     * @param dataModel
+     * @return
+     */
+    private checkBiggerSampleNoSummaryMetadata(DataModel dataModel) {
         final DataClass publicSchema = dataModel.childDataClasses.first()
-        assertEquals 'Number of child tables/dataclasses', 6, publicSchema.dataClasses?.size()
-
         final Set<DataClass> dataClasses = publicSchema.dataClasses
         final DataClass sampleTable = dataClasses.find {it.label == 'bigger_sample'}
 
-        assertEquals 'Sample Number of columns/dataElements', 4, sampleTable.dataElements.size()
+        List<String> expectedColumns = [
+                "sample_bigint",
+                "sample_decimal",
+                "sample_date",
+                "sample_varchar"
+        ]
 
-        final DataElement sample_bigint = sampleTable.dataElements.find{it.label == "sample_bigint"}
-        assertEquals 'description of summary metadata for sample_bigint',
-                'Estimated Value Distribution (calculated by sampling 10% of rows)',
-                sample_bigint.summaryMetadata[0].description
+        assertEquals 'Sample Number of columns/dataElements', expectedColumns.size(), sampleTable.dataElements.size()
 
-        final DataElement sample_decimal = sampleTable.dataElements.find{it.label == "sample_decimal"}
-        assertEquals 'description of summary metadata for sample_decimal',
-                'Estimated Value Distribution (calculated by sampling 10% of rows)',
-                sample_decimal.summaryMetadata[0].description
-
-        final DataElement sample_date = sampleTable.dataElements.find{it.label == "sample_date"}
-        assertEquals 'description of summary metadata for sample_date',
-                'Estimated Value Distribution (calculated by sampling 10% of rows)',
-                sample_date.summaryMetadata[0].description
-
-        /**
-         * Enumeration type determined using a sample, so we can't be certain that there will be exactly 15 results.
-         * But there should be between 1 and 15 values, and any values must be in our expected list.
-         */
-        final EnumerationType sampleVarcharEnumerationType = sampleTable.findDataElement('sample_varchar').dataType
-        assertTrue 'One or more 0 enumeration values', sampleVarcharEnumerationType.enumerationValues.size() >= 1
-        assertTrue '15 or fewer enumeration values', sampleVarcharEnumerationType.enumerationValues.size() <= 15
-        sampleVarcharEnumerationType.enumerationValues.each {
-            assertTrue 'Enumeration key in expected set',
-                    ['ENUM0', 'ENUM1', 'ENUM2', 'ENUM3', 'ENUM4', 'ENUM5', 'ENUM6', 'ENUM7', 'ENUM8', 'ENUM9', 'ENUM10', 'ENUM11', 'ENUM12', 'ENUM13', 'ENUM14'].contains(it.key)
+        expectedColumns.each {columnName ->
+            DataElement de = sampleTable.dataElements.find{it.label == columnName}
+            assertEquals 'Zero summaryMetadata', 0, de.summaryMetadata.size()
         }
+    }
 
+    /**
+     * Check that there is a DataClass for the bigger_sample table, with 4 columns but exact
+     * summary metadata on any of these columns.
+     * @param dataModel
+     * @return
+     */
+    private checkBiggerSampleSummaryMetadata(DataModel dataModel) {
+        final DataClass publicSchema = dataModel.childDataClasses.first()
+        final Set<DataClass> dataClasses = publicSchema.dataClasses
+        final DataClass sampleTable = dataClasses.find {it.label == 'bigger_sample'}
+
+        //Map of column name to expected summary metadata description:reportValue. Expect exact counts.
+        Map<String, Map<String, String>> expectedColumns = [
+                "sample_bigint": ['Value Distribution':'{"0 - 100000":99999,"100000 - 200000":100000,"200000 - 300000":100000,"300000 - 400000":100000,"400000 - 500000":100000,"500000 - 600000":1}'],
+                "sample_decimal": ['Value Distribution':'{"-1.000 - 0.000":249924,"0.000 - 1.000":245051,"1.000 - 2.000":5025}'],
+                "sample_date": ['Value Distribution':'{"Feb 2020 - Apr 2020":108893,"Apr 2020 - Jun 2020":63245,"Jun 2020 - Aug 2020":51465,"Aug 2020 - Oct 2020":49551,"Oct 2020 - Dec 2020":51145,"Dec 2020 - Feb 2021":63103,"Feb 2021 - Apr 2021":112598}'],
+                "sample_varchar": []
+        ]
+
+        assertEquals 'Sample Number of columns/dataElements', expectedColumns.size(), sampleTable.dataElements.size()
+
+        expectedColumns.each {columnName, expectedReport ->
+            DataElement de = sampleTable.dataElements.find{it.label == columnName}
+            assertEquals 'One summaryMetadata', expectedReport.size(), de.summaryMetadata.size()
+
+            expectedReport.each {expectedReportDescription, expectedReportValue ->
+                assertEquals "Description of summary metadatdata for ${columnName}", expectedReportDescription, de.summaryMetadata[0].description
+                assertEquals "Value of summary metadatdata for ${columnName}", expectedReportValue, de.summaryMetadata[0].summaryMetadataReports[0].reportValue
+            }
+        }
     }
 }
