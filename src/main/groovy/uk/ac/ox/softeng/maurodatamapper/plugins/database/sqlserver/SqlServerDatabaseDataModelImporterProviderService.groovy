@@ -120,14 +120,18 @@ class SqlServerDatabaseDataModelImporterProviderService
      * @return
      */
     @Override
-    String approxCountQueryString(String tableName, String schemaName = null) {
-        String schemaIdentifier = schemaName ? "${escapeIdentifier(schemaName)}." : ""
-        """
-        SELECT SUM(dm_db_partition_stats.row_count) AS approx_count 
-        FROM sys.dm_db_partition_stats 
+    List<String> approxCountQueryString(String tableName, String schemaName = null) {
+        List<String> queryStrings = super.approxCountQueryString(tableName, schemaName)
+
+        String query = """
+        SELECT SUM(dm_db_partition_stats.row_count) AS approx_count
+        FROM sys.dm_db_partition_stats
         WHERE object_id = OBJECT_ID('${tableName}')
-        AND (index_id = 0 OR index_id = 1) 
+        AND (index_id = 0 OR index_id = 1)
         """
+
+        queryStrings.push(query.toString())
+        queryStrings
     }
 
     @Override
