@@ -19,6 +19,8 @@ package uk.ac.ox.softeng.maurodatamapper.plugins.database.sqlserver
 
 import uk.ac.ox.softeng.maurodatamapper.core.container.Folder
 import uk.ac.ox.softeng.maurodatamapper.datamodel.DataModel
+import uk.ac.ox.softeng.maurodatamapper.datamodel.item.DataClass
+import uk.ac.ox.softeng.maurodatamapper.datamodel.item.DataElement
 import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.DataType
 import uk.ac.ox.softeng.maurodatamapper.plugins.database.AbstractDatabaseDataModelImporterProviderService
 import uk.ac.ox.softeng.maurodatamapper.plugins.database.RemoteDatabaseDataModelImporterProviderService
@@ -300,6 +302,74 @@ class SqlServerDatabaseDataModelImporterProviderService
             if (parameters.dataModelNameSuffix) dataModel.aliasesString = databaseName
             updateDataModelWithDatabaseSpecificInformation(dataModel, connection)
             dataModel
+        }
+    }
+
+    /**
+     * Use SQL Server fn_listextendedproperty to find extended properties
+     * See https://docs.microsoft.com/en-us/sql/relational-databases/system-functions/sys-fn-listextendedproperty-transact-sql?view=sql-server-ver15
+     * @param dataModel
+     * @param connection
+     */
+    @Override
+    void addMetadata(DataModel dataModel, Connection connection) {
+        //Get extended properties for the database
+        String databaseQuery = """
+        SELECT name AS metadata_key, value as metadata_value
+        FROM fn_listextendedproperty(NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+        """
+        PreparedStatement preparedStatement = connection.prepareStatement(databaseQuery)
+        List<Map<String, Object>> databaseMetadata = executeStatement(preparedStatement)
+
+        databaseMetadata.each {Map<String, Object> row ->
+            dataModel.addToMetadata(namespace, row.metadata_key as String, row.metadata_value as String, dataModel.createdBy)
+        }
+
+        //Get extended properties for the schema
+        String schemaQuery = """
+        SELECT name AS metadata_key, value as metadata_value, objname as schema_name
+        FROM fn_listextendedproperty(NULL, 'schema', default, NULL, NULL, NULL, NULL)
+        """
+        preparedStatement = connection.prepareStatement(schemaQuery)
+        List<Map<String, Object>> schemaMetadata = executeStatement(preparedStatement)
+
+        schemaMetadata.each {Map<String, Object> row ->
+            dataModel.childDataClasses.find{dc ->
+                dc.label == row.schema_name
+            }.addToMetadata(namespace, row.metadata_key as String, row.metadata_value as String, dataModel.createdBy)
+        }
+
+        dataModel.childDataClasses.each { DataClass schemaClass ->
+
+            //Get extended properties for all tables in this schema
+            String tableQuery = """
+            SELECT name AS metadata_key, value as metadata_value, objname as table_name
+            FROM fn_listextendedproperty(NULL, 'schema', '${schemaClass.label}', 'table', default, NULL, NULL)
+            """
+            preparedStatement = connection.prepareStatement(tableQuery)
+            List<Map<String, Object>> tableMetadata = executeStatement(preparedStatement)
+
+            tableMetadata.each {Map<String, Object> row ->
+                schemaClass.dataClasses.find{dc ->
+                    dc.label == row.table_name
+                }.addToMetadata(namespace, row.metadata_key as String, row.metadata_value as String, dataModel.createdBy)
+            }
+
+            schemaClass.dataClasses.each { DataClass tableClass ->
+                //Get extended properties for all columns for this table
+                String columnQuery = """
+                SELECT name AS metadata_key, value as metadata_value, objname as column_name
+                FROM fn_listextendedproperty(NULL, 'schema', '${schemaClass.label}', 'table', '${tableClass.label}', 'column', default)
+                """
+                preparedStatement = connection.prepareStatement(columnQuery)
+                List<Map<String, Object>> columnMetadata = executeStatement(preparedStatement)
+
+                columnMetadata.each {Map<String, Object> row ->
+                    tableClass.dataElements.find{de ->
+                        de.label == row.column_name
+                    }.addToMetadata(namespace, row.metadata_key as String, row.metadata_value as String, dataModel.createdBy)
+                }
+            }
         }
     }
 }

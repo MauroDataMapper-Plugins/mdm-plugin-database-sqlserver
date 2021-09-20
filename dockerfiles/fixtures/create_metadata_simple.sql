@@ -2,6 +2,18 @@ CREATE DATABASE metadata_simple;
 GO
 USE metadata_simple;
 GO
+
+EXECUTE sys.sp_addextendedproperty
+@name = N'info',
+@value = N'A database called metadata_simple which is used for integration testing';
+
+EXECUTE sys.sp_addextendedproperty
+@name = N'SCHEMA-DESCRIPTION',
+@value = N'Contains objects used for testing',
+@level0type = N'SCHEMA',
+@level0name = 'dbo';
+
+
 CREATE TABLE catalogue_item
 (
   id            UNIQUEIDENTIFIER NOT NULL
@@ -142,6 +154,26 @@ INSERT INTO organisation(id, org_name, org_type, org_code, description, org_char
 (39, 'ORG39', 'TYPEB', 'CODEX', 'Description of ORG39', 'CHAR3'),
 (40, 'ORG40', 'TYPEB', 'CODER', 'Description of ORG40', 'CHAR3');
 
+EXEC sp_addextendedproperty
+@name = N'DESCRIPTION', @value = 'A table about organisations',
+@level0type = N'Schema', @level0name = 'dbo',
+@level1type = N'Table', @level1name = 'organisation'
+GO
+
+EXEC sp_addextendedproperty
+@name = N'PROPERTY1', @value = 'A first extended property on org_code',
+@level0type = N'Schema', @level0name = 'dbo',
+@level1type = N'Table', @level1name = 'organisation',
+@level2type = N'Column',@level2name = 'org_code';
+GO
+
+EXEC sp_addextendedproperty
+@name = N'PROPERTY2', @value = 'A second extended property on org_code',
+@level0type = N'Schema', @level0name = 'dbo',
+@level1type = N'Table', @level1name = 'organisation',
+@level2type = N'Column',@level2name = 'org_code';
+GO
+
 CREATE TABLE sample
 (
   id INT NOT NULL PRIMARY KEY IDENTITY,
@@ -181,3 +213,4 @@ UPDATE bigger_sample
 SET sample_decimal = SIN(sample_bigint),
 sample_date = DATEADD(day, 200 * SIN(sample_bigint), '2020-09-02'),
 sample_varchar = 'ENUM' + CONVERT(VARCHAR(2), sample_bigint % 15);
+

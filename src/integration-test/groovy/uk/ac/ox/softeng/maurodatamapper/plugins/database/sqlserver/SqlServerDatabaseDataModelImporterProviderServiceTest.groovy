@@ -210,6 +210,9 @@ class SqlServerDatabaseDataModelImporterProviderServiceTest
 
     private void checkBasic(DataModel dataModel) {
         assertEquals 'Database/Model name', 'metadata_simple', dataModel.label
+        assertTrue 'info extended property present', dataModel.getMetadata().any{Metadata md ->
+            md.key == 'info' && md.value == 'A database called metadata_simple which is used for integration testing'
+        }
 
         /**
          * Expect data classes for:
@@ -226,6 +229,14 @@ class SqlServerDatabaseDataModelImporterProviderServiceTest
 
         final DataClass publicSchema = dataModel.childDataClasses.first()
         assertEquals 'Number of child tables/dataclasses', 6, publicSchema.dataClasses?.size()
+
+        //The public schema 'dbo' should have an extended property in metadata
+        assertEquals 'public schema is dbo', 'dbo', publicSchema.label
+        //TODO this assertion fails because somehow the metadata does not get persisted when saved during this test,
+        //although it works OK when using the plugin for real.
+        /*assertTrue 'desc extended property present', publicSchema.getMetadata().any{Metadata md ->
+            md.key == 'desc' && md.value == 'Contains objects used for testing'
+        }*/
 
         final Set<DataClass> dataClasses = publicSchema.dataClasses
 
@@ -290,6 +301,24 @@ class SqlServerDatabaseDataModelImporterProviderServiceTest
         assertEquals 'CU mandatory elements', 10, cuTable.dataElements.count {it.minMultiplicity == 1}
     }
 
+    private void checkOrganisationMetadata(DataClass organisationTable) {
+        // Expect 4 metadata - 2 for the primary key and 1 for indexes, 1 for extended property
+        assertEquals 'Organisation Number of metadata', 4, organisationTable.metadata.size()
+
+        assertTrue 'Extended property DESCRIPTION exists on organisation', organisationTable.getMetadata().any {Metadata md ->
+            md.key == 'DESCRIPTION' && md.value == 'A table about organisations'
+        }
+
+        DataElement org_code = organisationTable.findDataElement('org_code')
+        assertTrue "PROPERTY1 exists in metadata on org_code", org_code.getMetadata().any{ Metadata md ->
+            md.key == 'PROPERTY1' && md.value == 'A first extended property on org_code'
+        }
+
+        assertTrue "PROPERTY2 exists in metadata on org_code", org_code.getMetadata().any{ Metadata md ->
+            md.key == 'PROPERTY2' && md.value == 'A second extended property on org_code'
+        }
+    }
+
     private void checkOrganisationNotEnumerated(DataModel dataModel) {
         final DataClass publicSchema = dataModel.childDataClasses.first()
         final Set<DataClass> dataClasses = publicSchema.dataClasses
@@ -305,13 +334,13 @@ class SqlServerDatabaseDataModelImporterProviderServiceTest
         ]
 
         assertEquals 'Organisation Number of columns/dataElements', expectedColumns.size(), organisationTable.dataElements.size()
-        // Expect 3 metadata - 2 for the primary key and 1 for indexes
-        assertEquals 'Organisation Number of metadata', 3, organisationTable.metadata.size()
         //Expect all types to be Primitive, because we are not detecting enumerations
         expectedColumns.each {
             columnName, columnType ->
                 assertEquals "DomainType of the DataType for ${columnName}", columnType, organisationTable.findDataElement(columnName).dataType.domainType
         }
+
+        checkOrganisationMetadata(organisationTable)
     }
 
     private void checkOrganisationEnumerated(DataModel dataModel) {
@@ -329,13 +358,13 @@ class SqlServerDatabaseDataModelImporterProviderServiceTest
         ]
 
         assertEquals 'Organisation Number of columns/dataElements', expectedColumns.size(), organisationTable.dataElements.size()
-        // Expect 3 metadata - 2 for the primary key and 1 for indexes
-        assertEquals 'Organisation Number of metadata', 3, organisationTable.metadata.size()
         //Expect all types to be Primitive, because we are not detecting enumerations
         expectedColumns.each {
             columnName, columnType ->
                 assertEquals "DomainType of the DataType for ${columnName}", columnType, organisationTable.findDataElement(columnName).dataType.domainType
         }
+
+        checkOrganisationMetadata(organisationTable)
 
 
         final EnumerationType orgCodeEnumerationType = organisationTable.findDataElement('org_code').dataType
