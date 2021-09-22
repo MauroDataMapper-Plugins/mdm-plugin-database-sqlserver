@@ -27,6 +27,7 @@ import uk.ac.ox.softeng.maurodatamapper.plugins.testing.utils.BaseDatabasePlugin
 import groovy.json.JsonSlurper
 import org.junit.Ignore
 import org.junit.Test
+import uk.ac.ox.softeng.maurodatamapper.util.Utils
 
 import static org.junit.Assert.assertEquals
 import static org.junit.Assert.assertNotNull
@@ -75,6 +76,33 @@ class SqlServerDatabaseDataModelImporterProviderServiceTest
         }
 
         DataModel lims = importDataModelAndRetrieveFromDatabase(params)
+
+        assert lims
+    }
+
+    @Test
+    @Ignore('no credentials')
+    void testPerformance() {
+        SqlServerDatabaseDataModelImporterProviderServiceParameters params = new SqlServerDatabaseDataModelImporterProviderServiceParameters().tap {
+            databaseHost = 'oxnetdwp01.oxnet.nhs.uk'
+            domain = 'OXNET'
+            authenticationScheme = 'ntlm'
+            integratedSecurity = true
+            databaseUsername = ''
+            databasePassword = ''
+            databaseNames = 'LIMS'
+            schemaNames = 'raw'
+            databaseSSL = false
+            folderId = getTestFolder().getId()
+            detectEnumerations = true
+            maxEnumerations = 20
+            calculateSummaryMetadata = true
+            sampleThreshold = 100000
+            samplePercent = 0.1
+        }
+        long startTime = System.currentTimeMillis()
+        DataModel lims = importDataModelAndRetrieveFromDatabase(params)
+        log.info('Import complete in {}', Utils.timeTaken(startTime))
 
         assert lims
     }
