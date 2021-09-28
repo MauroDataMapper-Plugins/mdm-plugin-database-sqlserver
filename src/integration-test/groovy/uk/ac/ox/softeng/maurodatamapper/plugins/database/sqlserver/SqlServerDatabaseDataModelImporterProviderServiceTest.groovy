@@ -511,7 +511,7 @@ class SqlServerDatabaseDataModelImporterProviderServiceTest
         //sample_numeric
         final DataElement sample_numeric = sampleTable.dataElements.find{it.label == "sample_numeric"}
         assertEquals 'reportValue for sample_numeric',
-                '{"-5.000000 - 0.000000":80,"0.000000 - 5.000000":81,"5.000000 - 10.000000":20}',
+                '{"-10.000000 - -5.000000":20,"-5.000000 - 0.000000":80,"0.000000 - 5.000000":81,"5.000000 - 10.000000":20}',
                 sample_numeric.summaryMetadata[0].summaryMetadataReports[0].reportValue
 
         //sample_date
