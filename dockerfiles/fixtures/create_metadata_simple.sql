@@ -214,3 +214,4 @@ SET sample_decimal = SIN(sample_bigint),
 sample_date = DATEADD(day, 200 * SIN(sample_bigint), '2020-09-02'),
 sample_varchar = 'ENUM' + CONVERT(VARCHAR(2), sample_bigint % 15);
 
+CREATE VIEW bigger_sample_view AS SELECT * FROM bigger_sample;

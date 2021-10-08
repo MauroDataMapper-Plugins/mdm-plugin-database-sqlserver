@@ -162,7 +162,7 @@ class SqlServerDatabaseDataModelImporterProviderServiceTest
         assertEquals 'Number of reference types', 2, dataModel.dataTypes.findAll {it.domainType == 'ReferenceType'}.size()
         assertEquals 'Number of enumeration types', 4, dataModel.dataTypes.findAll {it.domainType == 'EnumerationType'}.size()
         assertEquals 'Number of char datatypes', 0, dataModel.dataTypes.findAll {it.domainType == 'PrimitiveType' && it.label == 'char'}.size()
-        assertEquals 'Number of tables/dataclasses', 7, dataModel.dataClasses?.size()
+        assertEquals 'Number of tables/dataclasses', 8, dataModel.dataClasses?.size()
         assertEquals 'Number of child tables/dataclasses', 1, dataModel.childDataClasses?.size()
 
     }
@@ -200,7 +200,7 @@ class SqlServerDatabaseDataModelImporterProviderServiceTest
         checkSampleSummaryMetadata(dataModel)
 
         final DataClass publicSchema = dataModel.childDataClasses.first()
-        assertEquals 'Number of child tables/dataclasses', 6, publicSchema.dataClasses?.size()
+        assertEquals 'Number of child tables/dataclasses', 7, publicSchema.dataClasses?.size()
 
         final Set<DataClass> dataClasses = publicSchema.dataClasses
         final DataClass sampleTable = dataClasses.find {it.label == 'bigger_sample'}
@@ -252,11 +252,11 @@ class SqlServerDatabaseDataModelImporterProviderServiceTest
          * sample (child of dbo)
          * sample_bigger (child of dbo)
          */
-        assertEquals 'Number of tables/dataclasses', 7, dataModel.dataClasses?.size()
+        assertEquals 'Number of tables/dataclasses', 8, dataModel.dataClasses?.size()
         assertEquals 'Number of child tables/dataclasses', 1, dataModel.childDataClasses?.size()
 
         final DataClass publicSchema = dataModel.childDataClasses.first()
-        assertEquals 'Number of child tables/dataclasses', 6, publicSchema.dataClasses?.size()
+        assertEquals 'Number of child tables/dataclasses', 7, publicSchema.dataClasses?.size()
 
         //The public schema 'dbo' should have an extended property in metadata
         assertEquals 'public schema is dbo', 'dbo', publicSchema.label
