@@ -157,7 +157,12 @@ class SqlServerDatabaseDataModelImporterProviderService
 
     @Override
     boolean isColumnForIntegerSummary(DataType dataType) {
-        dataType.domainType == 'PrimitiveType' && ["tinyint", "smallint", "int", "bigint"].contains(dataType.label)
+        dataType.domainType == 'PrimitiveType' && ["tinyint", "smallint", "int"].contains(dataType.label)
+    }
+
+    @Override
+    boolean isColumnForLongSummary(DataType dataType) {
+        dataType.domainType == 'PrimitiveType' && ["bigint"].contains(dataType.label)
     }
 
     @Override
