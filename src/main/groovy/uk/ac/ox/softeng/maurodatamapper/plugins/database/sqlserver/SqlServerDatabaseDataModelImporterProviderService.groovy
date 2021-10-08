@@ -266,7 +266,7 @@ class SqlServerDatabaseDataModelImporterProviderService
 
         String sql = "WITH #interval AS (${intervals})" +
                 """
-        SELECT interval_label, ${samplingStrategy.scaleFactor()} * COUNT([${columnName}]) AS interval_count
+        SELECT interval_label, ${samplingStrategy.scaleFactor()} * COUNT_BIG(${escapeIdentifier(columnName)}) AS interval_count
         FROM #interval
         LEFT JOIN
         ${escapeIdentifier(schemaName)}.${escapeIdentifier(tableName)} 
