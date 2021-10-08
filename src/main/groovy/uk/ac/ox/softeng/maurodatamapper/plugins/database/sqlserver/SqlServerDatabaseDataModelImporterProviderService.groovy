@@ -123,7 +123,11 @@ class SqlServerDatabaseDataModelImporterProviderService
      */
     @Override
     List<String> approxCountQueryString(String tableName, String schemaName = null) {
-        List<String> queryStrings = super.approxCountQueryString(tableName, schemaName)
+        //use COUNT_BIG rather than COUNT
+        String schemaIdentifier = schemaName ? "${escapeIdentifier(schemaName)}." : ""
+        List<String> queryStrings = [
+                "SELECT COUNT_BIG(*) AS approx_count FROM ${schemaIdentifier}${escapeIdentifier(tableName)}".toString()
+                ]
 
         String query = """
         SELECT SUM(dm_db_partition_stats.row_count) AS approx_count
