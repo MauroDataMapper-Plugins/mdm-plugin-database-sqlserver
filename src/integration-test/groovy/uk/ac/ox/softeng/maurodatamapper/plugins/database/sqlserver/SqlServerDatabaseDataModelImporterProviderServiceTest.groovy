@@ -582,7 +582,7 @@ class SqlServerDatabaseDataModelImporterProviderServiceTest
                 "sample_bigint": ['Value Distribution':'{"0 - 100000":99999,"100000 - 200000":100000,"200000 - 300000":100000,"300000 - 400000":100000,"400000 - 500000":100000,"500000 - 600000":1}'],
                 "sample_decimal": ['Value Distribution':'{"-1.000 - 0.000":249924,"0.000 - 1.000":245051,"1.000 - 2.000":5025}'],
                 "sample_date": ['Value Distribution':'{"Feb 2020 - Apr 2020":108893,"Apr 2020 - Jun 2020":63245,"Jun 2020 - Aug 2020":51465,"Aug 2020 - Oct 2020":49551,"Oct 2020 - Dec 2020":51145,"Dec 2020 - Feb 2021":63103,"Feb 2021 - Apr 2021":112598}'],
-                "sample_varchar": []
+                "sample_varchar": ['Enumeration Value Distribution':'{"ENUM0":33333,"ENUM1":33334,"ENUM10":33333,"ENUM11":33333,"ENUM12":33333,"ENUM13":33333,"ENUM14":33333,"ENUM2":33334,"ENUM3":33334,"ENUM4":33334,"ENUM5":33334,"ENUM6":33333,"ENUM7":33333,"ENUM8":33333,"ENUM9":33333}']
         ]
 
         assertEquals 'Sample Number of columns/dataElements', expectedColumns.size(), sampleTable.dataElements.size()

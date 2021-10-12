@@ -42,7 +42,7 @@ class SqlServerDatabaseDataModelImporterProviderService
 
     @Override
     SamplingStrategy getSamplingStrategy(SqlServerDatabaseDataModelImporterProviderServiceParameters parameters) {
-        new SamplingStrategy(parameters.sampleThreshold ?: DEFAULT_SAMPLE_THRESHOLD, parameters.samplePercent ?: DEFAULT_SAMPLE_PERCENTAGE)
+        new SqlServerSamplingStrategy(parameters.sampleThreshold ?: DEFAULT_SAMPLE_THRESHOLD, parameters.samplePercent ?: DEFAULT_SAMPLE_PERCENTAGE)
     }
 
     @Override
@@ -165,47 +165,6 @@ class SqlServerDatabaseDataModelImporterProviderService
         dataType.domainType == 'PrimitiveType' && ["bigint"].contains(dataType.label)
     }
 
-    @Override
-    String countDistinctColumnValuesQueryString(SamplingStrategy samplingStrategy, String columnName, String tableName, String schemaName = null) {
-        String query = super.countDistinctColumnValuesQueryString(columnName, tableName, schemaName)
-
-        if (samplingStrategy.useSampling()) {
-            query = query + " TABLESAMPLE (${samplingStrategy.percentage} PERCENT)"
-        }
-
-        query
-    }
-
-    @Override
-    String distinctColumnValuesQueryString(SamplingStrategy samplingStrategy, String columnName, String tableName, String schemaName = null) {
-        String query = super.distinctColumnValuesQueryString(columnName, tableName, schemaName)
-
-        if (samplingStrategy.useSampling()) {
-            query = query + " TABLESAMPLE (${samplingStrategy.percentage} PERCENT)"
-        }
-
-        query
-    }
-
-    /**
-     * Use the superclass method to construct a query string, and then append a TABLESAMPLE clause if necessary
-     * @param samplingStrategy
-     * @param columnName
-     * @param tableName
-     * @param schemaName
-     * @return Query string, optionally with TABLESAMPLE clause appended
-     */
-    @Override
-    String minMaxColumnValuesQueryString(SamplingStrategy samplingStrategy, String columnName, String tableName, String schemaName = null) {
-        String query = super.minMaxColumnValuesQueryString(samplingStrategy, columnName, tableName, schemaName)
-
-        if (samplingStrategy.useSampling()) {
-            query = query + " TABLESAMPLE (${samplingStrategy.percentage} PERCENT)"
-        }
-
-        query
-    }
-
     String columnRangeDistributionQueryString(DataType dataType,
                                               AbstractIntervalHelper intervalHelper,
                                               String columnName, String tableName, String schemaName) {
@@ -264,18 +223,13 @@ class SqlServerDatabaseDataModelImporterProviderService
                                                 String tableName, String schemaName) {
         String intervals = selects.join(" UNION ")
 
-        String tableSample = ""
-        if (samplingStrategy.useSampling()) {
-            tableSample = " TABLESAMPLE (${samplingStrategy.percentage} PERCENT) "
-        }
-
         String sql = "WITH #interval AS (${intervals})" +
                 """
         SELECT interval_label, ${samplingStrategy.scaleFactor()} * COUNT_BIG(${escapeIdentifier(columnName)}) AS interval_count
         FROM #interval
         LEFT JOIN
         ${escapeIdentifier(schemaName)}.${escapeIdentifier(tableName)} 
-        ${tableSample}
+        ${samplingStrategy.samplingClause()}
         ON ${escapeIdentifier(schemaName)}.${escapeIdentifier(tableName)}.${escapeIdentifier(columnName)} >= #interval.interval_start 
         AND ${escapeIdentifier(schemaName)}.${escapeIdentifier(tableName)}.${escapeIdentifier(columnName)} < #interval.interval_end
         GROUP BY interval_label, interval_start
