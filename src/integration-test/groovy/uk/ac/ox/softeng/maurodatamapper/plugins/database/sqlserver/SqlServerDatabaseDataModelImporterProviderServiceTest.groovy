@@ -179,6 +179,7 @@ class SqlServerDatabaseDataModelImporterProviderServiceTest
 
         checkBasic(dataModel)
         checkOrganisationEnumerated(dataModel)
+        checkOrganisationSummaryMetadata(dataModel)
         checkSampleSummaryMetadata(dataModel)
         checkBiggerSampleSummaryMetadata(dataModel)
     }
@@ -416,6 +417,29 @@ class SqlServerDatabaseDataModelImporterProviderServiceTest
         assertNotNull 'Enumeration value found', orgCharEnumerationType.enumerationValues.find{it.key == 'CHAR2'}
         assertNotNull 'Enumeration value found', orgCharEnumerationType.enumerationValues.find{it.key == 'CHAR3'}
         assertNull 'Not an expected value', orgCharEnumerationType.enumerationValues.find{it.key == 'CHAR4'}
+    }
+
+    private void checkOrganisationSummaryMetadata(DataModel dataModel) {
+        final DataClass publicSchema = dataModel.childDataClasses.first()
+        final Set<DataClass> dataClasses = publicSchema.dataClasses
+        final DataClass organisationTable = dataClasses.find {it.label == 'organisation'}
+
+        //Map of column name to expected summary metadata description:reportValue. Expect exact counts.
+        Map<String, Map<String, String>> expectedColumns = [
+                "org_code": ['Enumeration Value Distribution':'{"CODER":2,"CODEX":19,"CODEY":9,"CODEZ":11}'],
+                "org_type": ['Enumeration Value Distribution':'{"TYPEA":17,"TYPEB":22,"TYPEC":2}'],
+                "org_char": ['Enumeration Value Distribution':'{"CHAR1":7,"CHAR2":13,"CHAR3":20}']
+        ]
+
+        expectedColumns.each {columnName, expectedReport ->
+            DataElement de = organisationTable.dataElements.find{it.label == columnName}
+            assertEquals 'One summaryMetadata', expectedReport.size(), de.summaryMetadata.size()
+
+            expectedReport.each {expectedReportDescription, expectedReportValue ->
+                assertEquals "Description of summary metadatdata for ${columnName}", expectedReportDescription, de.summaryMetadata[0].description
+                assertEquals "Value of summary metadatdata for ${columnName}", expectedReportValue, de.summaryMetadata[0].summaryMetadataReports[0].reportValue
+            }
+        }
     }
 
     private checkSampleNoSummaryMetadata(DataModel dataModel) {

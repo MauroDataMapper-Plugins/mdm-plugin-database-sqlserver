@@ -152,7 +152,8 @@ INSERT INTO organisation(id, org_name, org_type, org_code, description, org_char
 (37, 'ORG37', 'TYPEB', 'CODEX', 'Description of ORG37', 'CHAR3'),
 (38, 'ORG38', 'TYPEB', 'CODEX', 'Description of ORG38', 'CHAR3'),
 (39, 'ORG39', 'TYPEB', 'CODEX', 'Description of ORG39', 'CHAR3'),
-(40, 'ORG40', 'TYPEB', 'CODER', 'Description of ORG40', 'CHAR3');
+(40, 'ORG40', 'TYPEB', 'CODER', 'Description of ORG40', 'CHAR3'),
+(41, 'ORG41', 'TYPEB', 'CODER', 'Description of ORG41', null);
 
 EXEC sp_addextendedproperty
 @name = N'DESCRIPTION', @value = 'A table about organisations',
@@ -213,5 +214,6 @@ UPDATE bigger_sample
 SET sample_decimal = SIN(sample_bigint),
 sample_date = DATEADD(day, 200 * SIN(sample_bigint), '2020-09-02'),
 sample_varchar = 'ENUM' + CONVERT(VARCHAR(2), sample_bigint % 15);
-
+GO
 CREATE VIEW bigger_sample_view AS SELECT * FROM bigger_sample;
+GO
