@@ -19,9 +19,12 @@ package uk.ac.ox.softeng.maurodatamapper.plugins.database.sqlserver
 
 import uk.ac.ox.softeng.maurodatamapper.core.container.Folder
 import uk.ac.ox.softeng.maurodatamapper.datamodel.DataModel
+import uk.ac.ox.softeng.maurodatamapper.datamodel.item.DataClass
+import uk.ac.ox.softeng.maurodatamapper.datamodel.item.DataElement
 import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.DataType
 import uk.ac.ox.softeng.maurodatamapper.plugins.database.AbstractDatabaseDataModelImporterProviderService
 import uk.ac.ox.softeng.maurodatamapper.plugins.database.RemoteDatabaseDataModelImporterProviderService
+import uk.ac.ox.softeng.maurodatamapper.plugins.database.SamplingStrategy
 import uk.ac.ox.softeng.maurodatamapper.plugins.database.summarymetadata.AbstractIntervalHelper
 import uk.ac.ox.softeng.maurodatamapper.security.User
 
@@ -36,6 +39,11 @@ import java.time.format.DateTimeFormatter
 class SqlServerDatabaseDataModelImporterProviderService
     extends AbstractDatabaseDataModelImporterProviderService<SqlServerDatabaseDataModelImporterProviderServiceParameters>
     implements RemoteDatabaseDataModelImporterProviderService {
+
+    @Override
+    SamplingStrategy getSamplingStrategy(SqlServerDatabaseDataModelImporterProviderServiceParameters parameters) {
+        new SqlServerSamplingStrategy(parameters.sampleThreshold ?: DEFAULT_SAMPLE_THRESHOLD, parameters.samplePercent ?: DEFAULT_SAMPLE_PERCENTAGE)
+    }
 
     @Override
     String getDisplayName() {
@@ -105,6 +113,33 @@ class SqlServerDatabaseDataModelImporterProviderService
         "[${identifier}]"
     }
 
+    /**
+     * Return a query that will select an approximate row count from the specified table.
+     * See https://docs.microsoft.com/en-us/sql/relational-databases/system-dynamic-management-views/sys-dm-db-partition-stats-transact-sql?view=sql-server-ver15
+     *
+     * @param tableName
+     * @param schemaName
+     * @return
+     */
+    @Override
+    List<String> approxCountQueryString(String tableName, String schemaName = null) {
+        //use COUNT_BIG rather than COUNT
+        String schemaIdentifier = schemaName ? "${escapeIdentifier(schemaName)}." : ""
+        List<String> queryStrings = [
+                "SELECT COUNT_BIG(*) AS approx_count FROM ${schemaIdentifier}${escapeIdentifier(tableName)}".toString()
+                ]
+
+        String query = """
+        SELECT SUM(dm_db_partition_stats.row_count) AS approx_count
+        FROM sys.dm_db_partition_stats
+        WHERE object_id = OBJECT_ID('${tableName}')
+        AND (index_id = 0 OR index_id = 1)
+        """
+
+        queryStrings.push(query.toString())
+        queryStrings
+    }
+
     @Override
     boolean isColumnPossibleEnumeration(DataType dataType) {
         dataType.domainType == 'PrimitiveType' && (dataType.label == "char" || dataType.label == "varchar")
@@ -122,16 +157,30 @@ class SqlServerDatabaseDataModelImporterProviderService
 
     @Override
     boolean isColumnForIntegerSummary(DataType dataType) {
-        dataType.domainType == 'PrimitiveType' && ["tinyint", "smallint", "int", "bigint"].contains(dataType.label)
+        dataType.domainType == 'PrimitiveType' && ["tinyint", "smallint", "int"].contains(dataType.label)
     }
 
     @Override
-    String columnRangeDistributionQueryString(DataType dataType, AbstractIntervalHelper intervalHelper, String columnName, String tableName, String schemaName) {
+    boolean isColumnForLongSummary(DataType dataType) {
+        dataType.domainType == 'PrimitiveType' && ["bigint"].contains(dataType.label)
+    }
+
+    String columnRangeDistributionQueryString(DataType dataType,
+                                              AbstractIntervalHelper intervalHelper,
+                                              String columnName, String tableName, String schemaName) {
+        SamplingStrategy samplingStrategy = new SamplingStrategy()
+        columnRangeDistributionQueryString(samplingStrategy, dataType, intervalHelper, columnName, tableName, schemaName)
+    }
+
+    @Override
+    String columnRangeDistributionQueryString(SamplingStrategy samplingStrategy, DataType dataType,
+                                              AbstractIntervalHelper intervalHelper,
+                                              String columnName, String tableName, String schemaName) {
         List<String> selects = intervalHelper.intervals.collect {
             "SELECT '${it.key}' AS interval_label, ${formatDataType(dataType, it.value.aValue)} AS interval_start, ${formatDataType(dataType, it.value.bValue)} AS interval_end"
         }
 
-        rangeDistributionQueryString(selects, columnName, tableName, schemaName)
+        rangeDistributionQueryString(samplingStrategy, selects, columnName, tableName, schemaName)
     }
 
     /**
@@ -170,15 +219,17 @@ class SqlServerDatabaseDataModelImporterProviderService
      * @param selects
      * @return
      */
-    private String rangeDistributionQueryString(List<String> selects, String columnName, String tableName, String schemaName) {
+    private String rangeDistributionQueryString(SamplingStrategy samplingStrategy, List<String> selects, String columnName,
+                                                String tableName, String schemaName) {
         String intervals = selects.join(" UNION ")
 
         String sql = "WITH #interval AS (${intervals})" +
                 """
-        SELECT interval_label, COUNT([${columnName}]) AS interval_count
+        SELECT interval_label, ${samplingStrategy.scaleFactor()} * COUNT_BIG(${escapeIdentifier(columnName)}) AS interval_count
         FROM #interval
         LEFT JOIN
         ${escapeIdentifier(schemaName)}.${escapeIdentifier(tableName)} 
+        ${samplingStrategy.samplingClause()}
         ON ${escapeIdentifier(schemaName)}.${escapeIdentifier(tableName)}.${escapeIdentifier(columnName)} >= #interval.interval_start 
         AND ${escapeIdentifier(schemaName)}.${escapeIdentifier(tableName)}.${escapeIdentifier(columnName)} < #interval.interval_end
         GROUP BY interval_label, interval_start
@@ -214,6 +265,74 @@ class SqlServerDatabaseDataModelImporterProviderService
             if (parameters.dataModelNameSuffix) dataModel.aliasesString = databaseName
             updateDataModelWithDatabaseSpecificInformation(dataModel, connection)
             dataModel
+        }
+    }
+
+    /**
+     * Use SQL Server fn_listextendedproperty to find extended properties
+     * See https://docs.microsoft.com/en-us/sql/relational-databases/system-functions/sys-fn-listextendedproperty-transact-sql?view=sql-server-ver15
+     * @param dataModel
+     * @param connection
+     */
+    @Override
+    void addMetadata(DataModel dataModel, Connection connection) {
+        //Get extended properties for the database
+        String databaseQuery = """
+        SELECT name AS metadata_key, value as metadata_value
+        FROM fn_listextendedproperty(NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+        """
+        PreparedStatement preparedStatement = connection.prepareStatement(databaseQuery)
+        List<Map<String, Object>> databaseMetadata = executeStatement(preparedStatement)
+
+        databaseMetadata.each {Map<String, Object> row ->
+            dataModel.addToMetadata(namespace, row.metadata_key as String, row.metadata_value as String, dataModel.createdBy)
+        }
+
+        //Get extended properties for the schema
+        String schemaQuery = """
+        SELECT name AS metadata_key, value as metadata_value, objname as schema_name
+        FROM fn_listextendedproperty(NULL, 'schema', default, NULL, NULL, NULL, NULL)
+        """
+        preparedStatement = connection.prepareStatement(schemaQuery)
+        List<Map<String, Object>> schemaMetadata = executeStatement(preparedStatement)
+
+        schemaMetadata.each {Map<String, Object> row ->
+            dataModel.childDataClasses.find{dc ->
+                dc.label == row.schema_name
+            }.addToMetadata(namespace, row.metadata_key as String, row.metadata_value as String, dataModel.createdBy)
+        }
+
+        dataModel.childDataClasses.each { DataClass schemaClass ->
+
+            //Get extended properties for all tables in this schema
+            String tableQuery = """
+            SELECT name AS metadata_key, value as metadata_value, objname as table_name
+            FROM fn_listextendedproperty(NULL, 'schema', '${schemaClass.label}', 'table', default, NULL, NULL)
+            """
+            preparedStatement = connection.prepareStatement(tableQuery)
+            List<Map<String, Object>> tableMetadata = executeStatement(preparedStatement)
+
+            tableMetadata.each {Map<String, Object> row ->
+                schemaClass.dataClasses.find{dc ->
+                    dc.label == row.table_name
+                }.addToMetadata(namespace, row.metadata_key as String, row.metadata_value as String, dataModel.createdBy)
+            }
+
+            schemaClass.dataClasses.each { DataClass tableClass ->
+                //Get extended properties for all columns for this table
+                String columnQuery = """
+                SELECT name AS metadata_key, value as metadata_value, objname as column_name
+                FROM fn_listextendedproperty(NULL, 'schema', '${schemaClass.label}', 'table', '${tableClass.label}', 'column', default)
+                """
+                preparedStatement = connection.prepareStatement(columnQuery)
+                List<Map<String, Object>> columnMetadata = executeStatement(preparedStatement)
+
+                columnMetadata.each {Map<String, Object> row ->
+                    tableClass.dataElements.find{de ->
+                        de.label == row.column_name
+                    }.addToMetadata(namespace, row.metadata_key as String, row.metadata_value as String, dataModel.createdBy)
+                }
+            }
         }
     }
 }
