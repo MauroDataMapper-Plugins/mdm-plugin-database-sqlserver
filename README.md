@@ -28,7 +28,7 @@ In the `docker-compose.yml` file add:
 mauro-data-mapper:
     build:
         args:
-            ADDITIONAL_PLUGINS: "uk.ac.ox.softeng.maurodatamapper.plugins:mdm-plugin-database-sqlserver:5.0.0"
+            ADDITIONAL_PLUGINS: "uk.ac.ox.softeng.maurodatamapper.plugins:mdm-plugin-database-sqlserver:6.0.0"
 ```
 
 Please note, if adding more than one plugin, this is a semicolon-separated list
@@ -39,7 +39,7 @@ In the `dependencies.gradle` file add:
 
 ```groovy
 dependencies {
-    runtimeOnly 'uk.ac.ox.softeng.maurodatamapper.plugins:mdm-plugin-database-sqlserver:5.0.0'
+    runtimeOnly 'uk.ac.ox.softeng.maurodatamapper.plugins:mdm-plugin-database-sqlserver:6.0.0'
 }
 ```
 
