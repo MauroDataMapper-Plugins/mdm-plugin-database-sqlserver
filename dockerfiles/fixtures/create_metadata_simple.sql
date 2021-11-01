@@ -2,6 +2,18 @@ CREATE DATABASE metadata_simple;
 GO
 USE metadata_simple;
 GO
+
+EXECUTE sys.sp_addextendedproperty
+@name = N'info',
+@value = N'A database called metadata_simple which is used for integration testing';
+
+EXECUTE sys.sp_addextendedproperty
+@name = N'SCHEMA-DESCRIPTION',
+@value = N'Contains objects used for testing',
+@level0type = N'SCHEMA',
+@level0name = 'dbo';
+
+
 CREATE TABLE catalogue_item
 (
   id            UNIQUEIDENTIFIER NOT NULL
@@ -140,4 +152,68 @@ INSERT INTO organisation(id, org_name, org_type, org_code, description, org_char
 (37, 'ORG37', 'TYPEB', 'CODEX', 'Description of ORG37', 'CHAR3'),
 (38, 'ORG38', 'TYPEB', 'CODEX', 'Description of ORG38', 'CHAR3'),
 (39, 'ORG39', 'TYPEB', 'CODEX', 'Description of ORG39', 'CHAR3'),
-(40, 'ORG40', 'TYPEB', 'CODER', 'Description of ORG40', 'CHAR3');
+(40, 'ORG40', 'TYPEB', 'CODER', 'Description of ORG40', 'CHAR3'),
+(41, 'ORG41', 'TYPEB', 'CODER', 'Description of ORG41', null);
+
+EXEC sp_addextendedproperty
+@name = N'DESCRIPTION', @value = 'A table about organisations',
+@level0type = N'Schema', @level0name = 'dbo',
+@level1type = N'Table', @level1name = 'organisation'
+GO
+
+EXEC sp_addextendedproperty
+@name = N'PROPERTY1', @value = 'A first extended property on org_code',
+@level0type = N'Schema', @level0name = 'dbo',
+@level1type = N'Table', @level1name = 'organisation',
+@level2type = N'Column',@level2name = 'org_code';
+GO
+
+EXEC sp_addextendedproperty
+@name = N'PROPERTY2', @value = 'A second extended property on org_code',
+@level0type = N'Schema', @level0name = 'dbo',
+@level1type = N'Table', @level1name = 'organisation',
+@level2type = N'Column',@level2name = 'org_code';
+GO
+
+CREATE TABLE sample
+(
+  id INT NOT NULL PRIMARY KEY IDENTITY,
+  sample_tinyint TINYINT,
+  sample_smallint SMALLINT,
+  sample_int INT,
+  sample_bigint BIGINT,
+  sample_decimal DECIMAL(12,3),
+  sample_numeric NUMERIC(10,6),
+  sample_date DATE,
+  sample_smalldatetime SMALLDATETIME,
+  sample_datetime DATETIME,
+  sample_datetime2 DATETIME2
+);
+
+--sample data: sample_smallint goes from -100 to 100. sample_int goes from 0 to 10000.
+--sample_bigint goes from -1000000 to 1000000
+WITH populate AS (
+SELECT -100 AS x UNION ALL SELECT x + 1 FROM populate WHERE x < 100
+)
+INSERT INTO sample (sample_tinyint, sample_smallint, sample_int, sample_bigint, sample_decimal, sample_numeric, sample_date, sample_smalldatetime, sample_datetime, sample_datetime2)
+SELECT ABS(x), x, x*x, x*x*x, x*x * 573, x*x*x / 104756.576, DATEADD(day, x, '2020-09-01'), DATEADD(month, x, '2020-09-01'), DATEADD(year, x, '2020-09-01'), DATEADD(hour, x, '2020-09-01') FROM populate
+OPTION (MAXRECURSION 0);
+
+CREATE TABLE bigger_sample (
+sample_bigint BIGINT,
+sample_decimal DECIMAL(12, 3),
+sample_date DATE,
+sample_varchar VARCHAR(20)
+);
+WITH populate AS (
+SELECT 1 AS x UNION ALL SELECT x + 1 FROM populate WHERE x < 500000
+)
+INSERT INTO bigger_sample (sample_bigint) SELECT x FROM populate
+OPTION (MAXRECURSION 0);
+UPDATE bigger_sample
+SET sample_decimal = SIN(sample_bigint),
+sample_date = DATEADD(day, 200 * SIN(sample_bigint), '2020-09-02'),
+sample_varchar = 'ENUM' + CONVERT(VARCHAR(2), sample_bigint % 15);
+GO
+CREATE VIEW bigger_sample_view AS SELECT * FROM bigger_sample;
+GO

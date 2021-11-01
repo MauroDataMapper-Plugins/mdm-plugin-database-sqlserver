@@ -103,6 +103,34 @@ class SqlServerDatabaseDataModelImporterProviderServiceParameters extends Databa
         ))
     String serverInstance
 
+    @ImportParameterConfig(
+            displayName = 'Sample Threshold',
+            description = [
+                    'Use sampling if the number of rows in a table exceeds this threshold. Set the value to 0 to ',
+                    'never sample. If no value is supplied, then 0 is assumed. Sampling is done using the SQL Server TABLESAMPLE clause.'],
+            order = 7,
+            optional = true,
+            group = @ImportGroupConfig(
+                    name = 'Database Import Details',
+                    order = 2
+            )
+    )
+    Integer sampleThreshold = 0
+
+    @ImportParameterConfig(
+            displayName = 'Sample Percentage',
+            description = [
+                    'If sampling, the percentage of rows to use as a sample. If the sampling threshold is > 0 but no',
+                    'value is supplied for Sample Percentage, a default value of 1% will be used.'
+            ],
+            order = 8,
+            optional = false,
+            group = @ImportGroupConfig(
+                    name = 'Database Import Details',
+                    order = 2
+            )
+    )
+    BigDecimal samplePercent = 1
 
     boolean getImportSchemasAsSeparateModels() {
         importSchemasAsSeparateModels ?: false

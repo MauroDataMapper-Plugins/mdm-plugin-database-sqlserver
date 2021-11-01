@@ -28,7 +28,7 @@ In the `docker-compose.yml` file add:
 mauro-data-mapper:
     build:
         args:
-            ADDITIONAL_PLUGINS: "uk.ac.ox.softeng.maurodatamapper.plugins:mdm-plugin-database-sqlserver:5.0.0"
+            ADDITIONAL_PLUGINS: "uk.ac.ox.softeng.maurodatamapper.plugins:mdm-plugin-database-sqlserver:6.0.0"
 ```
 
 Please note, if adding more than one plugin, this is a semicolon-separated list
@@ -39,24 +39,11 @@ In the `dependencies.gradle` file add:
 
 ```groovy
 dependencies {
-    runtimeOnly 'uk.ac.ox.softeng.maurodatamapper.plugins:mdm-plugin-database-sqlserver:5.0.0'
+    runtimeOnly 'uk.ac.ox.softeng.maurodatamapper.plugins:mdm-plugin-database-sqlserver:6.0.0'
 }
 ```
 
 ## Development
-
-When making changes to this plugin you may also need to make changes to ```mdm-plugin-database```. To work locally on both projects
-you can add e.g. the following as the first entry of settings.gradle in this project:
-
-```
-pluginManagement {
-    includeBuild '../mdm-plugin-database'
-}
-
-```
-(The above assumes that both this project and ```mdm-plugin-database``` are located in the same directory).
-
-If using Intellij, go to Preferences > Build Tools and choose to reload the project after Any changes.
 
 To run tests:
 ```./gradlew --build-cache integrationTest```
