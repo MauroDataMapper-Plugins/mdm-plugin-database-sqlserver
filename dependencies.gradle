@@ -2,7 +2,7 @@ dependencies {
     implementation group: 'uk.ac.ox.softeng.maurodatamapper', name: 'mdm-core', version: mdmCoreVersion
     implementation group: 'uk.ac.ox.softeng.maurodatamapper', name: 'mdm-plugin-datamodel', version: mdmCoreVersion
 
-    if(project(':mdm-plugin-database')) implementation project(':mdm-plugin-database')
+    if(findProject(':mdm-plugin-database')) implementation project(':mdm-plugin-database')
     else implementation group: 'uk.ac.ox.softeng.maurodatamapper.plugins', name: 'mdm-plugin-database', version: mdmPluginDatabaseVersion
 
     implementation group: 'org.codehaus.groovy', name: 'groovy-all', version: groovyVersion
