@@ -6,14 +6,14 @@
 
 # Stop any running containers
 echo 'Stopping running container'
-docker stop sqlserver2017
+docker stop sqlserver2019
 
 # Remove the old database
 echo 'Removing the old database files'
 sudo rm -rf /data/docker_volumes/sqlserver/*
 
 # Start oracle container
-echo 'Starting sqlserver2017'
+echo 'Starting sqlserver2019'
 /usr/local/bin/start-sqlserver
 
 # Follow the logs until the db is built
@@ -21,4 +21,4 @@ echo 'Building new sqlserver database'
 echo '>> Press ctrl+c when the database is built to continue this script'
 echo '>> When the database is built please run /usr/local/bin/install-testdb-sqlserver'
 echo ''
-docker logs -f sqlserver2017
+docker logs -f sqlserver2019

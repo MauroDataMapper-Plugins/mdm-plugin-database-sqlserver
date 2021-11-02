@@ -65,7 +65,9 @@ class SqlServerDataTypeProvider implements DefaultDataTypeProvider {
             Each table may have only one timestamp variable.
         '''.stripIndent()
 
-        [[label: 'char[n]', description: 'Fixed width character string\n8,000 characters'],
+        [[label: 'char', description: 'Fixed width character string\n8,000 characters'],
+         [label: 'char[n]', description: 'Fixed width character string\n8,000 characters'],
+         [label: 'varchar', description: 'Variable width character string\n8,000 characters'],
          [label: 'varchar[n]', description: 'Variable width character string\n8,000 characters'],
          [label: 'varchar[max]', description: 'Variable width character string\n1,073,741,824 characters'],
          [label: 'text', description: 'Variable width character string\n2GB of text data'],
@@ -73,6 +75,7 @@ class SqlServerDataTypeProvider implements DefaultDataTypeProvider {
          [label: 'nvarchar', description: 'Variable width Unicode string\n4,000 characters'],
          [label: 'nvarchar[max]', description: 'Variable width Unicode string\n536,870,912 characters'],
          [label: 'ntext', description: 'Variable width Unicode string\n2GB of text data'],
+         [label: 'binary', description: 'Fixed width binary string\n8,000 bytes'],
          [label: 'binary[n]', description: 'Fixed width binary string\n8,000 bytes'],
          [label: 'varbinary', description: 'Variable width binary string\n8,000 bytes'],
          [label: 'varbinary[max]', description: 'Variable width binary string\n2GB'],
@@ -82,7 +85,9 @@ class SqlServerDataTypeProvider implements DefaultDataTypeProvider {
          [label: 'smallint', description: 'Allows whole numbers between -32,768 and 32,767'],
          [label: 'int', description: 'Allows whole numbers between -2,147,483,648 and 2,147,483,647'],
          [label: 'bigint', description: 'Allows whole numbers between -9,223,372,036,854,775,808 and 9,223,372,036,854,775,807'],
+         [label: 'decimal', description: decimalDescription],
          [label: 'decimal[p,s]', description: decimalDescription],
+         [label: 'numeric', description: numericDescription],
          [label: 'numeric[p,s]', description: numericDescription],
          [label: 'smallmoney', description: 'Monetary data from -214,748.3648 to 214,748.3647'],
          [label: 'money', description: 'Monetary data from -922,337,203,685,477.5808 to 922,337,203,685,477.5807'],
