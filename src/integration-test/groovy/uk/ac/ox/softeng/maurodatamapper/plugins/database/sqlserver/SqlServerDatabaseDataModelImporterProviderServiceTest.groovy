@@ -25,6 +25,7 @@ import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.EnumerationType
 import uk.ac.ox.softeng.maurodatamapper.plugins.testing.utils.BaseDatabasePluginTest
 
 import groovy.json.JsonSlurper
+import groovy.util.logging.Slf4j
 import org.junit.Ignore
 import org.junit.Test
 import uk.ac.ox.softeng.maurodatamapper.util.Utils
@@ -35,6 +36,7 @@ import static org.junit.Assert.assertNull
 import static org.junit.Assert.assertTrue
 
 // @CompileStatic
+@Slf4j
 class SqlServerDatabaseDataModelImporterProviderServiceTest
     extends BaseDatabasePluginTest<SqlServerDatabaseDataModelImporterProviderServiceParameters, SqlServerDatabaseDataModelImporterProviderService> {
 
@@ -137,8 +139,13 @@ class SqlServerDatabaseDataModelImporterProviderServiceTest
          *
          * So 16 primitive types, plus two reference types for catalogue_itemType and catalogue_userType
          */
-        assertEquals 'Number of columntypes/datatypes', 18, dataModel.dataTypes?.size()
-        assertEquals 'Number of primitive types', 16, dataModel.dataTypes.findAll {it.domainType == 'PrimitiveType'}.size()
+
+        List<String> defaultDataTypeLabels = importerInstance.defaultDataTypeProvider.defaultListOfDataTypes.collect {it.label}
+        assertEquals 'Default DT Provider', 40, defaultDataTypeLabels.size()
+
+        assertEquals 'Number of columntypes/datatypes', 42, dataModel.dataTypes?.size()
+        assertTrue 'All primitive DTs map to a default DT', dataModel.primitiveTypes.findAll {!(it.label in defaultDataTypeLabels)}.isEmpty()
+        assertEquals 'Number of primitive types', 40, dataModel.dataTypes.findAll {it.domainType == 'PrimitiveType'}.size()
         assertEquals 'Number of reference types', 2, dataModel.dataTypes.findAll {it.domainType == 'ReferenceType'}.size()
         assertEquals 'Number of enumeration types', 0, dataModel.dataTypes.findAll {it.domainType == 'EnumerationType'}.size()
         assertEquals 'Number of char datatypes', 1, dataModel.dataTypes.findAll {it.domainType == 'PrimitiveType' && it.label == 'char'}.size()
@@ -157,11 +164,15 @@ class SqlServerDatabaseDataModelImporterProviderServiceTest
         checkSampleNoSummaryMetadata(dataModel)
         checkBiggerSampleNoSummaryMetadata(dataModel)
 
-        assertEquals 'Number of columntypes/datatypes', 21, dataModel.dataTypes?.size()
-        assertEquals 'Number of primitive types', 15, dataModel.dataTypes.findAll {it.domainType == 'PrimitiveType'}.size()
+        List<String> defaultDataTypeLabels = importerInstance.defaultDataTypeProvider.defaultListOfDataTypes.collect {it.label}
+        assertEquals 'Default DT Provider', 40, defaultDataTypeLabels.size()
+
+
+        assertEquals 'Number of columntypes/datatypes', 46, dataModel.dataTypes?.size()
+        assertTrue 'All primitive DTs map to a default DT', dataModel.primitiveTypes.findAll {!(it.label in defaultDataTypeLabels)}.isEmpty()
+        assertEquals 'Number of primitive types', 40, dataModel.dataTypes.findAll {it.domainType == 'PrimitiveType'}.size()
         assertEquals 'Number of reference types', 2, dataModel.dataTypes.findAll {it.domainType == 'ReferenceType'}.size()
         assertEquals 'Number of enumeration types', 4, dataModel.dataTypes.findAll {it.domainType == 'EnumerationType'}.size()
-        assertEquals 'Number of char datatypes', 0, dataModel.dataTypes.findAll {it.domainType == 'PrimitiveType' && it.label == 'char'}.size()
         assertEquals 'Number of tables/dataclasses', 8, dataModel.dataClasses?.size()
         assertEquals 'Number of child tables/dataclasses', 1, dataModel.childDataClasses?.size()
 

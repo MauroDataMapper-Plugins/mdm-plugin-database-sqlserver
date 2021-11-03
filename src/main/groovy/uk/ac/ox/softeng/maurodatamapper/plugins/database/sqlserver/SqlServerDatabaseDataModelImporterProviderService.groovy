@@ -22,6 +22,7 @@ import uk.ac.ox.softeng.maurodatamapper.datamodel.DataModel
 import uk.ac.ox.softeng.maurodatamapper.datamodel.item.DataClass
 import uk.ac.ox.softeng.maurodatamapper.datamodel.item.DataElement
 import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.DataType
+import uk.ac.ox.softeng.maurodatamapper.datamodel.provider.DefaultDataTypeProvider
 import uk.ac.ox.softeng.maurodatamapper.plugins.database.AbstractDatabaseDataModelImporterProviderService
 import uk.ac.ox.softeng.maurodatamapper.plugins.database.RemoteDatabaseDataModelImporterProviderService
 import uk.ac.ox.softeng.maurodatamapper.plugins.database.SamplingStrategy
@@ -29,6 +30,7 @@ import uk.ac.ox.softeng.maurodatamapper.plugins.database.summarymetadata.Abstrac
 import uk.ac.ox.softeng.maurodatamapper.security.User
 
 import groovy.util.logging.Slf4j
+import org.springframework.beans.factory.annotation.Autowired
 
 import java.sql.Connection
 import java.sql.PreparedStatement
@@ -39,6 +41,9 @@ import java.time.format.DateTimeFormatter
 class SqlServerDatabaseDataModelImporterProviderService
     extends AbstractDatabaseDataModelImporterProviderService<SqlServerDatabaseDataModelImporterProviderServiceParameters>
     implements RemoteDatabaseDataModelImporterProviderService {
+
+    @Autowired
+    SqlServerDataTypeProvider sqlServerDataTypeProvider
 
     @Override
     SamplingStrategy getSamplingStrategy(SqlServerDatabaseDataModelImporterProviderServiceParameters parameters) {
@@ -53,6 +58,11 @@ class SqlServerDatabaseDataModelImporterProviderService
     @Override
     String getVersion() {
         getClass().getPackage().getSpecificationVersion() ?: 'SNAPSHOT'
+    }
+
+    @Override
+    DefaultDataTypeProvider getDefaultDataTypeProvider() {
+        sqlServerDataTypeProvider
     }
 
     @Override
