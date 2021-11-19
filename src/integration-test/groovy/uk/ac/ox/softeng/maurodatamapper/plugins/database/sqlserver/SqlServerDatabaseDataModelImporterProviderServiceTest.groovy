@@ -155,8 +155,8 @@ class SqlServerDatabaseDataModelImporterProviderServiceTest
     void testImportSimpleDatabaseWithEnumerations() {
         final DataModel dataModel = importDataModelAndRetrieveFromDatabase(
                 createDatabaseImportParameters(databaseHost, databasePort).tap {
-                    databaseNames = 'metadata_simple';
-                    detectEnumerations = true;
+                    databaseNames = 'metadata_simple'
+                    detectEnumerations = true
                     maxEnumerations = 20})
 
         checkBasic(dataModel)
@@ -182,10 +182,10 @@ class SqlServerDatabaseDataModelImporterProviderServiceTest
     void 'testImportSimpleDatabaseWithSummaryMetadata'() {
         final DataModel dataModel = importDataModelAndRetrieveFromDatabase(
                 createDatabaseImportParameters(databaseHost, databasePort).tap {
-                    databaseNames = 'metadata_simple';
-                    detectEnumerations = true;
-                    maxEnumerations = 20;
-                    calculateSummaryMetadata = true;
+                    databaseNames = 'metadata_simple'
+                    detectEnumerations = true
+                    maxEnumerations = 20
+                    calculateSummaryMetadata = true
                 })
 
         checkBasic(dataModel)
