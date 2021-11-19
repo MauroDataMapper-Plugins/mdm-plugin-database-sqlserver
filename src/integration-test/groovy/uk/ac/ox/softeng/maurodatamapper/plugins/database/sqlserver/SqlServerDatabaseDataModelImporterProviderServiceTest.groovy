@@ -439,7 +439,7 @@ class SqlServerDatabaseDataModelImporterProviderServiceTest
         Map<String, Map<String, String>> expectedColumns = [
                 "org_code": ['Enumeration Value Distribution':'{"CODER":2,"CODEX":19,"CODEY":9,"CODEZ":11}'],
                 "org_type": ['Enumeration Value Distribution':'{"TYPEA":17,"TYPEB":22,"TYPEC":2}'],
-                "org_char": ['Enumeration Value Distribution':'{"NULL":1,"CHAR1":7,"CHAR2":13,"CHAR3":20}']
+                "org_char": ['Enumeration Value Distribution':'{"NULL":1,"     ":1,"CHAR1":7,"CHAR2":13,"CHAR3":19}']
         ]
 
         expectedColumns.each {columnName, expectedReport ->
