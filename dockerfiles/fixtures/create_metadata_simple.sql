@@ -152,7 +152,7 @@ INSERT INTO organisation(id, org_name, org_type, org_code, description, org_char
 (37, 'ORG37', 'TYPEB', 'CODEX', 'Description of ORG37', 'CHAR3'),
 (38, 'ORG38', 'TYPEB', 'CODEX', 'Description of ORG38', 'CHAR3'),
 (39, 'ORG39', 'TYPEB', 'CODEX', 'Description of ORG39', 'CHAR3'),
-(40, 'ORG40', 'TYPEB', 'CODER', 'Description of ORG40', 'CHAR3'),
+(40, 'ORG40', 'TYPEB', 'CODER', 'Description of ORG40', ''),
 (41, 'ORG41', 'TYPEB', 'CODER', 'Description of ORG41', null);
 
 EXEC sp_addextendedproperty
