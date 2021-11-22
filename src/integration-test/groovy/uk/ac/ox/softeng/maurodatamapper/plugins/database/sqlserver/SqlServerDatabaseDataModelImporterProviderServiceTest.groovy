@@ -451,6 +451,9 @@ class SqlServerDatabaseDataModelImporterProviderServiceTest
                 assertEquals "Value of summary metadatdata for ${columnName}", expectedReportValue, de.summaryMetadata[0].summaryMetadataReports[0].reportValue
             }
         }
+
+        //All data element summary metadata should also have been added to the data class
+        assert organisationTable.dataElements.findAll{it.summaryMetadata}.size() == organisationTable.summaryMetadata.size()
     }
 
     private checkSampleNoSummaryMetadata(DataModel dataModel) {
