@@ -152,7 +152,7 @@ class SqlServerDatabaseDataModelImporterProviderService
 
     @Override
     boolean isColumnPossibleEnumeration(DataType dataType) {
-        dataType.domainType == 'PrimitiveType' && (dataType.label == "char" || dataType.label == "varchar")
+        dataType.domainType == 'PrimitiveType' && ["char", "varchar", "nchar", "nvarchar"].contains(dataType.label)
     }
 
     @Override
