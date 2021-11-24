@@ -1,0 +1,47 @@
+[
+  {
+    "sectionName": "Table / View Properties",
+    "fields": [
+      {
+        "fieldName": "Primary Key name",
+        "metadataPropertyName": "primary_key_name",
+        "minMultiplicity": 0,
+        "maxMultiplicity": 1,
+        "dataType": "string",
+        "derived": false
+      },
+      {
+        "fieldName": "Primary Key Columns",
+        "metadataPropertyName": "primary_key_columns",
+        "minMultiplicity": 0,
+        "maxMultiplicity": 1,
+        "dataType": "string",
+        "derived": false
+      },
+      {
+        "fieldName": "Unique Constraint Name",
+        "metadataPropertyName": "unique_name",
+        "minMultiplicity": 0,
+        "maxMultiplicity": 1,
+        "dataType": "string",
+        "derived": false
+      },
+      {
+        "fieldName": "Unique Constraint Columns",
+        "metadataPropertyName": "unique_columns",
+        "minMultiplicity": 0,
+        "maxMultiplicity": 1,
+        "dataType": "string",
+        "derived": false
+      },
+      {
+        "fieldName": "Indexes",
+        "metadataPropertyName": "indexes",
+        "minMultiplicity": 0,
+        "maxMultiplicity": 1,
+        "dataType": "string",
+        "derived": false
+      }
+    ]
+  }
+]

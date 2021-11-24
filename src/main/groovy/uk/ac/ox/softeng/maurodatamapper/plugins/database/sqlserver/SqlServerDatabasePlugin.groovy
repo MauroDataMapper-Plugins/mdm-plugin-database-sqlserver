@@ -17,6 +17,8 @@
  */
 package uk.ac.ox.softeng.maurodatamapper.plugins.database.sqlserver
 
+import uk.ac.ox.softeng.maurodatamapper.plugins.database.sqlserver.table.SqlServerTableProfileProviderService
+import uk.ac.ox.softeng.maurodatamapper.plugins.database.sqlserver.column.SqlServerColumnProfileProviderService
 import uk.ac.ox.softeng.maurodatamapper.provider.plugin.AbstractMauroDataMapperPlugin
 
 class SqlServerDatabasePlugin extends AbstractMauroDataMapperPlugin {
@@ -31,6 +33,9 @@ class SqlServerDatabasePlugin extends AbstractMauroDataMapperPlugin {
         {->
             sqlServerDatabaseDataModelImporterProviderService SqlServerDatabaseDataModelImporterProviderService
             sqlServerDataTypeProvider SqlServerDataTypeProvider
+            sqlServerDatabaseProfileProviderService SqlServerDatabaseProfileProviderService
+            sqlServerTableProfileProviderService SqlServerTableProfileProviderService
+            sqlServerColumnProfileProviderService SqlServerColumnProfileProviderService
         }
     }
 }

@@ -1,0 +1,183 @@
+[
+  {
+    "sectionName": "Column Properties",
+    "fields": [
+      {
+        "fieldName": "Foreign Key Name",
+        "metadataPropertyName": "foreign_key_name",
+        "minMultiplicity": 0,
+        "maxMultiplicity": 1,
+        "dataType": "string",
+        "derived": false
+      },
+      {
+        "fieldName": "Foreign Key Columns",
+        "metadataPropertyName": "foreign_key_columns",
+        "minMultiplicity": 0,
+        "maxMultiplicity": 1,
+        "dataType": "string",
+        "derived": false
+      },
+      {
+        "fieldName": "Primary Key",
+        "metadataPropertyName": "primary key",
+        "minMultiplicity": 0,
+        "maxMultiplicity": 1,
+        "dataType": "string",
+        "derived": false
+      },
+      {
+        "fieldName": "Unique",
+        "metadataPropertyName": "unique",
+        "minMultiplicity": 0,
+        "maxMultiplicity": 1,
+        "dataType": "string",
+        "derived": false
+      },
+      {
+        "fieldName": "Character Maximum Length",
+        "metadataPropertyName": "character_maximum_length",
+        "minMultiplicity": 0,
+        "maxMultiplicity": 1,
+        "dataType": "int",
+        "derived": false
+      },
+      {
+        "fieldName": "Character Octet Length",
+        "metadataPropertyName": "character_octet_length",
+        "minMultiplicity": 0,
+        "maxMultiplicity": 1,
+        "dataType": "int",
+        "derived": false
+      },
+      {
+        "fieldName": "Character Set Catalog",
+        "metadataPropertyName": "character_set_catalog",
+        "minMultiplicity": 0,
+        "maxMultiplicity": 1,
+        "dataType": "string",
+        "derived": false
+      },
+      {
+        "fieldName": "Character Set Name",
+        "metadataPropertyName": "character_set_name",
+        "minMultiplicity": 0,
+        "maxMultiplicity": 1,
+        "dataType": "string",
+        "derived": false
+      },
+      {
+        "fieldName": "Character Set Schema",
+        "metadataPropertyName": "character_set_schema",
+        "minMultiplicity": 0,
+        "maxMultiplicity": 1,
+        "dataType": "string",
+        "derived": false
+      },
+      {
+        "fieldName": "Collation Catalog",
+        "metadataPropertyName": "collation_catalog",
+        "minMultiplicity": 0,
+        "maxMultiplicity": 1,
+        "dataType": "string",
+        "derived": false
+      },
+      {
+        "fieldName": "Collation Name",
+        "metadataPropertyName": "collation_name",
+        "minMultiplicity": 0,
+        "maxMultiplicity": 1,
+        "dataType": "string",
+        "derived": false
+      },
+      {
+        "fieldName": "Collation Schema",
+        "metadataPropertyName": "collation_schema",
+        "minMultiplicity": 0,
+        "maxMultiplicity": 1,
+        "dataType": "string",
+        "derived": false
+      },
+      {
+        "fieldName": "Column Default",
+        "metadataPropertyName": "column_default",
+        "minMultiplicity": 0,
+        "maxMultiplicity": 1,
+        "dataType": "string",
+        "derived": false
+      },
+      {
+        "fieldName": "Datetime Precision",
+        "metadataPropertyName": "datetime_precision",
+        "minMultiplicity": 0,
+        "maxMultiplicity": 1,
+        "dataType": "string",
+        "derived": false
+      },
+      {
+        "fieldName": "Domain Catalog",
+        "metadataPropertyName": "domain_catalog",
+        "minMultiplicity": 0,
+        "maxMultiplicity": 1,
+        "dataType": "string",
+        "derived": false
+      },
+      {
+        "fieldName": "Domain Name",
+        "metadataPropertyName": "domain_name",
+        "minMultiplicity": 0,
+        "maxMultiplicity": 1,
+        "dataType": "string",
+        "derived": false
+      },
+      {
+        "fieldName": "Domain Schema",
+        "metadataPropertyName": "domain_schema",
+        "minMultiplicity": 0,
+        "maxMultiplicity": 1,
+        "dataType": "string",
+        "derived": false
+      },
+      {
+        "fieldName": "Is Nullable",
+        "metadataPropertyName": "is_nullable",
+        "minMultiplicity": 0,
+        "maxMultiplicity": 1,
+        "dataType": "string",
+        "derived": false
+      },
+      {
+        "fieldName": "Numeric Precision",
+        "metadataPropertyName": "numeric_precision",
+        "minMultiplicity": 0,
+        "maxMultiplicity": 1,
+        "dataType": "int",
+        "derived": false
+      },
+      {
+        "fieldName": "Numeric Precision Radix",
+        "metadataPropertyName": "numeric_precision_radix",
+        "minMultiplicity": 0,
+        "maxMultiplicity": 1,
+        "dataType": "int",
+        "derived": false
+      },
+      {
+        "fieldName": "Numeric Scale",
+        "metadataPropertyName": "numeric_scale",
+        "minMultiplicity": 0,
+        "maxMultiplicity": 1,
+        "dataType": "int",
+        "derived": false
+      },
+      {
+        "fieldName": "Ordinal Position",
+        "metadataPropertyName": "ordinal_position",
+        "minMultiplicity": 0,
+        "maxMultiplicity": 1,
+        "dataType": "int",
+        "derived": false
+      }
+    ]
+  }
+]
