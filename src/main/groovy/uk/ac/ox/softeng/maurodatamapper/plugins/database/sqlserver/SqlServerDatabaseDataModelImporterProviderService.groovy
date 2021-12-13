@@ -61,6 +61,26 @@ class SqlServerDatabaseDataModelImporterProviderService
     }
 
     @Override
+    String namespaceColumn() {
+        "uk.ac.ox.softeng.maurodatamapper.plugins.database.sqlserver.column"
+    }
+
+    @Override
+    String namespaceTable() {
+        "uk.ac.ox.softeng.maurodatamapper.plugins.database.sqlserver.table"
+    }
+
+    @Override
+    String namespaceSchema() {
+        "uk.ac.ox.softeng.maurodatamapper.plugins.database.sqlserver.schema"
+    }
+
+    @Override
+    String namespaceDatabase() {
+        "uk.ac.ox.softeng.maurodatamapper.plugins.database.sqlserver"
+    }
+
+    @Override
     DefaultDataTypeProvider getDefaultDataTypeProvider() {
         sqlServerDataTypeProvider
     }
@@ -152,7 +172,7 @@ class SqlServerDatabaseDataModelImporterProviderService
 
     @Override
     boolean isColumnPossibleEnumeration(DataType dataType) {
-        dataType.domainType == 'PrimitiveType' && (dataType.label == "char" || dataType.label == "varchar")
+        dataType.domainType == 'PrimitiveType' && ["char", "varchar", "nchar", "nvarchar"].contains(dataType.label)
     }
 
     @Override
@@ -309,7 +329,7 @@ class SqlServerDatabaseDataModelImporterProviderService
         schemaMetadata.each {Map<String, Object> row ->
             dataModel.childDataClasses.find{dc ->
                 dc.label == row.schema_name
-            }.addToMetadata(namespace, row.metadata_key as String, row.metadata_value as String, dataModel.createdBy)
+            }?.addToMetadata(namespace, row.metadata_key as String, row.metadata_value as String, dataModel.createdBy)
         }
 
         dataModel.childDataClasses.each { DataClass schemaClass ->

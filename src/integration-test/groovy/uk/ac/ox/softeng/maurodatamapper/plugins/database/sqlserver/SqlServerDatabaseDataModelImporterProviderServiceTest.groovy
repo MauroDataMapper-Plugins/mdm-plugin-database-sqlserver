@@ -155,8 +155,8 @@ class SqlServerDatabaseDataModelImporterProviderServiceTest
     void testImportSimpleDatabaseWithEnumerations() {
         final DataModel dataModel = importDataModelAndRetrieveFromDatabase(
                 createDatabaseImportParameters(databaseHost, databasePort).tap {
-                    databaseNames = 'metadata_simple';
-                    detectEnumerations = true;
+                    databaseNames = 'metadata_simple'
+                    detectEnumerations = true
                     maxEnumerations = 20})
 
         checkBasic(dataModel)
@@ -168,11 +168,11 @@ class SqlServerDatabaseDataModelImporterProviderServiceTest
         assertEquals 'Default DT Provider', 40, defaultDataTypeLabels.size()
 
 
-        assertEquals 'Number of columntypes/datatypes', 46, dataModel.dataTypes?.size()
+        assertEquals 'Number of columntypes/datatypes', 48, dataModel.dataTypes?.size()
         assertTrue 'All primitive DTs map to a default DT', dataModel.primitiveTypes.findAll {!(it.label in defaultDataTypeLabels)}.isEmpty()
         assertEquals 'Number of primitive types', 40, dataModel.dataTypes.findAll {it.domainType == 'PrimitiveType'}.size()
         assertEquals 'Number of reference types', 2, dataModel.dataTypes.findAll {it.domainType == 'ReferenceType'}.size()
-        assertEquals 'Number of enumeration types', 4, dataModel.dataTypes.findAll {it.domainType == 'EnumerationType'}.size()
+        assertEquals 'Number of enumeration types', 6, dataModel.dataTypes.findAll {it.domainType == 'EnumerationType'}.size()
         assertEquals 'Number of tables/dataclasses', 8, dataModel.dataClasses?.size()
         assertEquals 'Number of child tables/dataclasses', 1, dataModel.childDataClasses?.size()
 
@@ -182,10 +182,10 @@ class SqlServerDatabaseDataModelImporterProviderServiceTest
     void 'testImportSimpleDatabaseWithSummaryMetadata'() {
         final DataModel dataModel = importDataModelAndRetrieveFromDatabase(
                 createDatabaseImportParameters(databaseHost, databasePort).tap {
-                    databaseNames = 'metadata_simple';
-                    detectEnumerations = true;
-                    maxEnumerations = 20;
-                    calculateSummaryMetadata = true;
+                    databaseNames = 'metadata_simple'
+                    detectEnumerations = true
+                    maxEnumerations = 20
+                    calculateSummaryMetadata = true
                 })
 
         checkBasic(dataModel)
@@ -370,7 +370,9 @@ class SqlServerDatabaseDataModelImporterProviderServiceTest
                 'org_char': 'PrimitiveType',
                 'description': 'PrimitiveType',
                 'org_type': 'PrimitiveType',
-                'id': 'PrimitiveType'
+                'id': 'PrimitiveType',
+                'org_nvarchar': 'PrimitiveType',
+                'org_nchar': 'PrimitiveType'
         ]
 
         assertEquals 'Organisation Number of columns/dataElements', expectedColumns.size(), organisationTable.dataElements.size()
@@ -394,7 +396,9 @@ class SqlServerDatabaseDataModelImporterProviderServiceTest
                 'org_char': 'EnumerationType',
                 'description': 'PrimitiveType',
                 'org_type': 'EnumerationType',
-                'id': 'PrimitiveType'
+                'id': 'PrimitiveType',
+                'org_nvarchar': 'EnumerationType',
+                'org_nchar': 'EnumerationType'
         ]
 
         assertEquals 'Organisation Number of columns/dataElements', expectedColumns.size(), organisationTable.dataElements.size()
@@ -439,7 +443,7 @@ class SqlServerDatabaseDataModelImporterProviderServiceTest
         Map<String, Map<String, String>> expectedColumns = [
                 "org_code": ['Enumeration Value Distribution':'{"CODER":2,"CODEX":19,"CODEY":9,"CODEZ":11}'],
                 "org_type": ['Enumeration Value Distribution':'{"TYPEA":17,"TYPEB":22,"TYPEC":2}'],
-                "org_char": ['Enumeration Value Distribution':'{"NULL":1,"CHAR1":7,"CHAR2":13,"CHAR3":20}']
+                "org_char": ['Enumeration Value Distribution':'{"NULL":1,"     ":1,"CHAR1":7,"CHAR2":13,"CHAR3":19}']
         ]
 
         expectedColumns.each {columnName, expectedReport ->
@@ -451,6 +455,9 @@ class SqlServerDatabaseDataModelImporterProviderServiceTest
                 assertEquals "Value of summary metadatdata for ${columnName}", expectedReportValue, de.summaryMetadata[0].summaryMetadataReports[0].reportValue
             }
         }
+
+        //All data element summary metadata should also have been added to the data class
+        assert organisationTable.dataElements.findAll{it.summaryMetadata}.size() == organisationTable.summaryMetadata.size()
     }
 
     private checkSampleNoSummaryMetadata(DataModel dataModel) {

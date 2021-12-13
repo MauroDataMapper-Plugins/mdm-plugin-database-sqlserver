@@ -24,8 +24,6 @@ import uk.ac.ox.softeng.maurodatamapper.plugins.database.DatabaseDataModelImport
 import com.microsoft.sqlserver.jdbc.SQLServerDataSource
 import groovy.util.logging.Slf4j
 
-import javax.sql.DataSource
-
 @Slf4j
 // @CompileStatic
 class SqlServerDatabaseDataModelImporterProviderServiceParameters extends DatabaseDataModelImporterProviderServiceParameters<SQLServerDataSource> {
@@ -104,31 +102,31 @@ class SqlServerDatabaseDataModelImporterProviderServiceParameters extends Databa
     String serverInstance
 
     @ImportParameterConfig(
-            displayName = 'Sample Threshold',
-            description = [
-                    'Use sampling if the number of rows in a table exceeds this threshold. Set the value to 0 to ',
-                    'never sample. If no value is supplied, then 0 is assumed. Sampling is done using the SQL Server TABLESAMPLE clause.'],
-            order = 7,
-            optional = true,
-            group = @ImportGroupConfig(
-                    name = 'Database Import Details',
-                    order = 2
-            )
+        displayName = 'Sample Threshold',
+        description = [
+            'Use sampling if the number of rows in a table exceeds this threshold. Set the value to 0 to ',
+            'never sample. If no value is supplied, then 0 is assumed. Sampling is done using the SQL Server TABLESAMPLE clause.'],
+        order = 7,
+        optional = true,
+        group = @ImportGroupConfig(
+            name = 'Database Import Details',
+            order = 2
+        )
     )
     Integer sampleThreshold = 0
 
     @ImportParameterConfig(
-            displayName = 'Sample Percentage',
-            description = [
-                    'If sampling, the percentage of rows to use as a sample. If the sampling threshold is > 0 but no',
-                    'value is supplied for Sample Percentage, a default value of 1% will be used.'
-            ],
-            order = 8,
-            optional = false,
-            group = @ImportGroupConfig(
-                    name = 'Database Import Details',
-                    order = 2
-            )
+        displayName = 'Sample Percentage',
+        description = [
+            'If sampling, the percentage of rows to use as a sample. If the sampling threshold is > 0 but no',
+            'value is supplied for Sample Percentage, a default value of 1% will be used.'
+        ],
+        order = 8,
+        optional = false,
+        group = @ImportGroupConfig(
+            name = 'Database Import Details',
+            order = 2
+        )
     )
     BigDecimal samplePercent = 1
 
@@ -162,9 +160,13 @@ class SqlServerDatabaseDataModelImporterProviderServiceParameters extends Databa
         1433
     }
 
+    String getProvidedDomain(){
+        domain
+    }
+
     SQLServerDataSource getSqlServerDataSource(String databaseName) {
         log.debug 'DataSource connection using SQLServer'
-        new SQLServerDataSource().tap {
+        SQLServerDataSource ds = new SQLServerDataSource().tap {
             setServerName databaseHost
             setPortNumber databasePort
             setDatabaseName databaseName
@@ -174,9 +176,9 @@ class SqlServerDatabaseDataModelImporterProviderServiceParameters extends Databa
             if (!(authScheme.toLowerCase() in ['nativeauthentication', 'ntlm', 'javakerberos'])) authScheme = 'ntlm'
             setAuthenticationScheme(authScheme)
 
-            if (authScheme.toLowerCase() == 'nativeauthentication'){
+            if (authScheme.toLowerCase() == 'nativeauthentication') {
                 setIntegratedSecurity getIntegratedSecurity()
-            }else{
+            } else {
                 setIntegratedSecurity true
             }
 
@@ -185,6 +187,7 @@ class SqlServerDatabaseDataModelImporterProviderServiceParameters extends Databa
                 setEncrypt true
             }
             setApplicationName('Mauro-Data-Mapper')
+            if (getProvidedDomain()) setDomain(getProvidedDomain())
         }
     }
 }
