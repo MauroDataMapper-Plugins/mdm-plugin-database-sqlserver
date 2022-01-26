@@ -10,7 +10,6 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath "com.github.jengelman.gradle.plugins:shadow:$shadowGradlePluginVersion"
         classpath "ox.softeng.gradle:oxbrcinformatics-gradle-plugins:$oxbrcinformaticsGradlePluginsVersion"
 
         // The version of spring-core included is 3.1.3.RELEASE which is incompatible with the grails-gradle-plugin used by all the
