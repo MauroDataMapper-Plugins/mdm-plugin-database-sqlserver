@@ -17,7 +17,8 @@ task('jvmArgs') {
 }
 
 license {
-    header = file("${rootDir}/NOTICE")
+    header = file("${rootDir}/gradle/NOTICE.tmpl")
+    ext.year = Calendar.getInstance().get(Calendar.YEAR)
     excludes([
         '**/*.gson',
         '**/*.yml',
@@ -30,6 +31,7 @@ license {
         '**/*.xml',
         '**/*.sql',
         '**/*.csv',
+        '**/*.xsd'
     ])
 }
 

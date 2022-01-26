@@ -16,8 +16,8 @@ dependencies {
     testImplementation group: 'uk.ac.ox.softeng.maurodatamapper.plugins', name: 'mdm-plugin-testing-utils', version: mdmPluginTestUtilsVersion
 
     // Postgres database
-    runtime group: 'org.flywaydb', name: 'flyway-core'
-    runtime "org.hibernate:hibernate-jcache"
-    runtime group: 'org.ehcache', name: 'ehcache'
-    runtime group: 'org.postgresql', name: 'postgresql'
+    runtimeOnly group: 'org.flywaydb', name: 'flyway-core'
+    runtimeOnly "org.hibernate:hibernate-jcache"
+    runtimeOnly group: 'org.ehcache', name: 'ehcache'
+    runtimeOnly group: 'org.postgresql', name: 'postgresql'
 }
