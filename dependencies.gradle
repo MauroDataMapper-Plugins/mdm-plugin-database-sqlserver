@@ -6,18 +6,17 @@ dependencies {
     if(findProject(':mdm-plugin-database')) implementation project(':mdm-plugin-database')
     else implementation group: 'uk.ac.ox.softeng.maurodatamapper.plugins', name: 'mdm-plugin-database', version: mdmPluginDatabaseVersion
 
+    implementation 'org.grails:grails-plugin-rest'
     implementation group: 'org.codehaus.groovy', name: 'groovy-all', version: groovyVersion
-    implementation group: 'org.slf4j', name: 'slf4j-api', version: slf4jVersion
-    implementation group: 'ch.qos.logback', name: 'logback-classic', version: logbackVersion
 
-    implementation group: 'com.microsoft.sqlserver', name: 'mssql-jdbc', version: sqlServerJdbcVersion
-    implementation group: 'net.sourceforge.jtds', name: 'jtds', version: jtdsVersion
+    implementation group: 'com.microsoft.sqlserver', name: 'mssql-jdbc'//, version: sqlServerJdbcVersion
+    implementation group: 'net.sourceforge.jtds', name: 'jtds'//, version: jtdsVersion
 
     testImplementation group: 'uk.ac.ox.softeng.maurodatamapper.plugins', name: 'mdm-plugin-testing-utils', version: mdmPluginTestUtilsVersion
 
     // Postgres database
-    runtime group: 'org.flywaydb', name: 'flyway-core'
-    runtime "org.hibernate:hibernate-jcache"
-    runtime group: 'org.ehcache', name: 'ehcache'
-    runtime group: 'org.postgresql', name: 'postgresql'
+    runtimeOnly group: 'org.flywaydb', name: 'flyway-core'
+    runtimeOnly "org.hibernate:hibernate-jcache"
+    runtimeOnly group: 'org.ehcache', name: 'ehcache'
+    runtimeOnly group: 'org.postgresql', name: 'postgresql'
 }
