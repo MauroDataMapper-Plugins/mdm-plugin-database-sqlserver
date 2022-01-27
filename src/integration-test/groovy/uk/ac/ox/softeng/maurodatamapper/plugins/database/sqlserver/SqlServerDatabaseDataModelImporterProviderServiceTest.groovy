@@ -559,7 +559,7 @@ class SqlServerDatabaseDataModelImporterProviderServiceTest
         //sample_date
         final DataElement sample_date = sampleTable.dataElements.find{it.label == "sample_date"}
         assertEquals 'reportValue for sample_date',
-                '{"May 2020":8,"Jun 2020":30,"Jul 2020":31,"Aug 2020":31,"Sep 2020":30,"Oct 2020":31,"Nov 2020":30,"Dec 2020":10}',
+                '{"May 2020":8,"Jun 2020":30,"Jul 2020":31,"Aug 2020":31,"Sept 2020":30,"Oct 2020":31,"Nov 2020":30,"Dec 2020":10}',
                 sample_date.summaryMetadata[0].summaryMetadataReports[0].reportValue
 
         //sample_smalldatetime
