@@ -58,7 +58,7 @@ appender('STDOUT', ConsoleAppender) {
 
 appender("FILE", FileAppender) {
     file = "${logDir}/${logFileName}.log"
-    append = true
+    append = false
 
     encoder(PatternLayoutEncoder) {
         pattern = nonAnsiPattern
@@ -94,7 +94,7 @@ logger 'org.hibernate.engine.jdbc.spi.SqlExceptionHelper', ERROR
 logger 'org.springframework.mock.web.MockServletContext', ERROR
 logger 'StackTrace', OFF
 
-logger 'uk.ac.ox.softeng.maurodatamapper.datamodel', TRACE
+logger 'uk.ac.ox.softeng.maurodatamapper.datamodel', DEBUG
 
 class HibernateMappingFilter extends Filter<ILoggingEvent> {
 
