@@ -17,18 +17,25 @@
  */
 package uk.ac.ox.softeng.maurodatamapper.plugins.database.sqlserver
 
+
 import uk.ac.ox.softeng.maurodatamapper.core.facet.Metadata
 import uk.ac.ox.softeng.maurodatamapper.datamodel.DataModel
 import uk.ac.ox.softeng.maurodatamapper.datamodel.item.DataClass
 import uk.ac.ox.softeng.maurodatamapper.datamodel.item.DataElement
 import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.EnumerationType
+import uk.ac.ox.softeng.maurodatamapper.datamodel.provider.exporter.DataModelJsonExporterService
 import uk.ac.ox.softeng.maurodatamapper.plugins.testing.utils.BaseDatabasePluginTest
+import uk.ac.ox.softeng.maurodatamapper.security.basic.UnloggedUser
+import uk.ac.ox.softeng.maurodatamapper.util.Utils
 
 import groovy.json.JsonSlurper
 import groovy.util.logging.Slf4j
 import org.junit.Ignore
 import org.junit.Test
-import uk.ac.ox.softeng.maurodatamapper.util.Utils
+
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
 
 import static org.junit.Assert.assertEquals
 import static org.junit.Assert.assertNotNull
@@ -83,8 +90,12 @@ class SqlServerDatabaseDataModelImporterProviderServiceTest
     }
 
     @Test
-    @Ignore('no credentials')
-    void testPerformance() {
+    //    @Ignore('no credentials')
+    void testPerformanceAndExportAsJson() {
+
+        DataModelJsonExporterService jsonExporterService = getBean(DataModelJsonExporterService)
+        assert jsonExporterService
+
         SqlServerDatabaseDataModelImporterProviderServiceParameters params = new SqlServerDatabaseDataModelImporterProviderServiceParameters().tap {
             databaseHost = 'oxnetdwp01.oxnet.nhs.uk'
             domain = 'OXNET'
@@ -100,13 +111,19 @@ class SqlServerDatabaseDataModelImporterProviderServiceTest
             maxEnumerations = 20
             calculateSummaryMetadata = true
             sampleThreshold = 100000
-            samplePercent = 0.1
+            samplePercent = 10
         }
         long startTime = System.currentTimeMillis()
         DataModel lims = importDataModelAndRetrieveFromDatabase(params)
         log.info('Import complete in {}', Utils.timeTaken(startTime))
 
         assert lims
+
+        ByteArrayOutputStream baos = jsonExporterService.exportDataModel(UnloggedUser.instance, lims)
+        Path p = Paths.get('build/export')
+        Files.createDirectories(p)
+        Path f = p.resolve('modules.json')
+        Files.write(f, baos.toByteArray())
     }
 
     @Test

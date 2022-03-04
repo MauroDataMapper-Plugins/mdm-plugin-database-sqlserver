@@ -41,7 +41,7 @@ jar {
 }
 
 integrationTest {
-    maxHeapSize = '4g'
+    maxHeapSize = '8g'
     jvmArgs '-XX:+TieredCompilation', '-XX:TieredStopAtLevel=1', '-XX:CICompilerCount=3'
 
     def envMap = System.getenv()
