@@ -17,22 +17,26 @@
  */
 package uk.ac.ox.softeng.maurodatamapper.plugins.database.sqlserver
 
-
 import uk.ac.ox.softeng.maurodatamapper.core.facet.Metadata
 import uk.ac.ox.softeng.maurodatamapper.datamodel.DataModel
 import uk.ac.ox.softeng.maurodatamapper.datamodel.item.DataClass
 import uk.ac.ox.softeng.maurodatamapper.datamodel.item.DataElement
 import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.EnumerationType
 import uk.ac.ox.softeng.maurodatamapper.datamodel.provider.exporter.DataModelJsonExporterService
-import uk.ac.ox.softeng.maurodatamapper.plugins.testing.utils.BaseDatabasePluginTest
+import uk.ac.ox.softeng.maurodatamapper.plugins.database.sqlserver.parameters.SqlServerDatabaseDataModelImporterProviderServiceParameters
 import uk.ac.ox.softeng.maurodatamapper.security.basic.UnloggedUser
+import uk.ac.ox.softeng.maurodatamapper.test.json.JsonComparer
 import uk.ac.ox.softeng.maurodatamapper.util.Utils
 
+import com.google.common.base.CaseFormat
+import grails.gorm.transactions.Rollback
+import grails.testing.mixin.integration.Integration
 import groovy.json.JsonSlurper
 import groovy.util.logging.Slf4j
-import org.junit.Ignore
-import org.junit.Test
+import org.junit.Assert
+import spock.lang.Ignore
 
+import java.nio.charset.Charset
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -44,18 +48,16 @@ import static org.junit.Assert.assertTrue
 
 // @CompileStatic
 @Slf4j
-class SqlServerDatabaseDataModelImporterProviderServiceTest
-    extends BaseDatabasePluginTest<SqlServerDatabaseDataModelImporterProviderServiceParameters, SqlServerDatabaseDataModelImporterProviderService> {
+@Integration
+@Rollback
+class SqlServerDatabaseDataModelImporterProviderServiceSpec
+    extends BaseDatabasePluginTest<
+        SqlServerDatabaseDataModelImporterProviderServiceParameters,
+        SqlServerDatabaseDataModelImporterProviderService> {
 
-    @Override
-    String getDatabasePortPropertyName() {
-        'unknown'
-    }
 
-    @Override
-    int getDefaultDatabasePort() {
-        1433
-    }
+    SqlServerDatabaseDataModelImporterProviderService sqlServerDatabaseDataModelImporterProviderService
+    DataModelJsonExporterService dataModelJsonExporterService
 
     @Override
     SqlServerDatabaseDataModelImporterProviderServiceParameters createDatabaseImportParameters() {
@@ -68,34 +70,26 @@ class SqlServerDatabaseDataModelImporterProviderServiceTest
         }
     }
 
-    @Test
-    @Ignore('no credentials')
-    void testConnectionToOuh() {
-        SqlServerDatabaseDataModelImporterProviderServiceParameters params = new SqlServerDatabaseDataModelImporterProviderServiceParameters().tap {
-            databaseHost = 'oxnetdwp01.oxnet.nhs.uk'
-            domain = 'OXNET'
-            authenticationScheme = 'ntlm'
-            integratedSecurity = true
-            databaseUsername = ''
-            databasePassword = ''
-            databaseNames = 'LIMS'
-            schemaNames = 'raw'
-            databaseSSL = false
-            folderId = getTestFolder().getId()
-        }
-
-        DataModel lims = importDataModelAndRetrieveFromDatabase(params)
-
-        assert lims
+    @Override
+    String getDatabasePortPropertyName() {
+        'unknown'
     }
 
-    @Test
-    //    @Ignore('no credentials')
-    void testPerformanceAndExportAsJson() {
+    @Override
+    int getDefaultDatabasePort() {
+        1433
+    }
 
-        DataModelJsonExporterService jsonExporterService = getBean(DataModelJsonExporterService)
-        assert jsonExporterService
+    @Override
+    SqlServerDatabaseDataModelImporterProviderService getImporterInstance() {
+        sqlServerDatabaseDataModelImporterProviderService
+    }
 
+
+    @Ignore('no credentials')
+    void 'test Connection To Ouh'() {
+        given:
+        setupData()
         SqlServerDatabaseDataModelImporterProviderServiceParameters params = new SqlServerDatabaseDataModelImporterProviderServiceParameters().tap {
             databaseHost = 'oxnetdwp01.oxnet.nhs.uk'
             domain = 'OXNET'
@@ -106,31 +100,65 @@ class SqlServerDatabaseDataModelImporterProviderServiceTest
             databaseNames = 'LIMS'
             schemaNames = 'raw'
             databaseSSL = false
-            folderId = getTestFolder().getId()
+            folderId = folder.getId()
+        }
+
+        when:
+        DataModel lims = importDataModelAndRetrieveFromDatabase(params)
+
+        then:
+        lims
+    }
+
+    @Ignore('no credentials')
+    void 'test Performance And Export As Json'() {
+        given:
+        setupData()
+        SqlServerDatabaseDataModelImporterProviderServiceParameters params = new SqlServerDatabaseDataModelImporterProviderServiceParameters().tap {
+            databaseHost = 'oxnetdwp01.oxnet.nhs.uk'
+            domain = 'OXNET'
+            authenticationScheme = 'ntlm'
+            integratedSecurity = true
+            databaseUsername = ''
+            databasePassword = ''
+            databaseNames = 'LIMS'
+            schemaNames = 'raw'
+            databaseSSL = false
+            folderId = folder.getId()
             detectEnumerations = true
             maxEnumerations = 20
             calculateSummaryMetadata = true
             sampleThreshold = 100000
             samplePercent = 10
         }
+        when:
         long startTime = System.currentTimeMillis()
         DataModel lims = importDataModelAndRetrieveFromDatabase(params)
         log.info('Import complete in {}', Utils.timeTaken(startTime))
 
-        assert lims
+        then:
+        lims
 
-        ByteArrayOutputStream baos = jsonExporterService.exportDataModel(UnloggedUser.instance, lims)
+        when:
+        ByteArrayOutputStream baos = dataModelJsonExporterService.exportDataModel(UnloggedUser.instance, lims)
         Path p = Paths.get('build/export')
         Files.createDirectories(p)
         Path f = p.resolve('modules.json')
         Files.write(f, baos.toByteArray())
+
+        then:
+        true
     }
 
-    @Test
-    void testImportSimpleDatabase() {
+    void 'test Import Simple Database'() {
+        given:
+        setupData()
+
+        when:
         final DataModel dataModel = importDataModelAndRetrieveFromDatabase(
             createDatabaseImportParameters(databaseHost, databasePort).tap {databaseNames = 'metadata_simple'})
 
+        then:
         checkBasic(dataModel)
         checkOrganisationNotEnumerated(dataModel)
         checkSampleNoSummaryMetadata(dataModel)
@@ -157,9 +185,11 @@ class SqlServerDatabaseDataModelImporterProviderServiceTest
          * So 16 primitive types, plus two reference types for catalogue_itemType and catalogue_userType
          */
 
+        when:
         List<String> defaultDataTypeLabels = importerInstance.defaultDataTypeProvider.defaultListOfDataTypes.collect {it.label}
-        assertEquals 'Default DT Provider', 40, defaultDataTypeLabels.size()
 
+        then:
+        assertEquals 'Default DT Provider', 40, defaultDataTypeLabels.size()
         assertEquals 'Number of columntypes/datatypes', 42, dataModel.dataTypes?.size()
         assertTrue 'All primitive DTs map to a default DT', dataModel.primitiveTypes.findAll {!(it.label in defaultDataTypeLabels)}.isEmpty()
         assertEquals 'Number of primitive types', 40, dataModel.dataTypes.findAll {it.domainType == 'PrimitiveType'}.size()
@@ -168,23 +198,29 @@ class SqlServerDatabaseDataModelImporterProviderServiceTest
         assertEquals 'Number of char datatypes', 1, dataModel.dataTypes.findAll {it.domainType == 'PrimitiveType' && it.label == 'char'}.size()
     }
 
-    @Test
-    void testImportSimpleDatabaseWithEnumerations() {
-        final DataModel dataModel = importDataModelAndRetrieveFromDatabase(
-                createDatabaseImportParameters(databaseHost, databasePort).tap {
-                    databaseNames = 'metadata_simple'
-                    detectEnumerations = true
-                    maxEnumerations = 20})
+    void 'test Import Simple Database With Enumerations'() {
+        given:
+        setupData()
 
+        when:
+        final DataModel dataModel = importDataModelAndRetrieveFromDatabase(
+            createDatabaseImportParameters(databaseHost, databasePort).tap {
+                databaseNames = 'metadata_simple'
+                detectEnumerations = true
+                maxEnumerations = 20
+            })
+
+        then:
         checkBasic(dataModel)
         checkOrganisationEnumerated(dataModel)
         checkSampleNoSummaryMetadata(dataModel)
         checkBiggerSampleNoSummaryMetadata(dataModel)
 
+        when:
         List<String> defaultDataTypeLabels = importerInstance.defaultDataTypeProvider.defaultListOfDataTypes.collect {it.label}
+
+        then:
         assertEquals 'Default DT Provider', 40, defaultDataTypeLabels.size()
-
-
         assertEquals 'Number of columntypes/datatypes', 48, dataModel.dataTypes?.size()
         assertTrue 'All primitive DTs map to a default DT', dataModel.primitiveTypes.findAll {!(it.label in defaultDataTypeLabels)}.isEmpty()
         assertEquals 'Number of primitive types', 40, dataModel.dataTypes.findAll {it.domainType == 'PrimitiveType'}.size()
@@ -195,16 +231,20 @@ class SqlServerDatabaseDataModelImporterProviderServiceTest
 
     }
 
-    @Test
-    void 'testImportSimpleDatabaseWithSummaryMetadata'() {
-        final DataModel dataModel = importDataModelAndRetrieveFromDatabase(
-                createDatabaseImportParameters(databaseHost, databasePort).tap {
-                    databaseNames = 'metadata_simple'
-                    detectEnumerations = true
-                    maxEnumerations = 20
-                    calculateSummaryMetadata = true
-                })
+    void 'test Import Simple Database With Summary Metadata'() {
+        given:
+        setupData()
 
+        when:
+        final DataModel dataModel = importDataModelAndRetrieveFromDatabase(
+            createDatabaseImportParameters(databaseHost, databasePort).tap {
+                databaseNames = 'metadata_simple'
+                detectEnumerations = true
+                maxEnumerations = 20
+                calculateSummaryMetadata = true
+            })
+
+        then:
         checkBasic(dataModel)
         checkOrganisationEnumerated(dataModel)
         checkOrganisationSummaryMetadata(dataModel)
@@ -212,41 +252,59 @@ class SqlServerDatabaseDataModelImporterProviderServiceTest
         checkBiggerSampleSummaryMetadata(dataModel)
     }
 
-    @Test
-    void 'testImportSimpleDatabaseWithSummaryMetadataWithSampling'() {
-        final DataModel dataModel = importDataModelAndRetrieveFromDatabase(
-                createDatabaseImportParameters(databaseHost, databasePort).tap {
-                    databaseNames = 'metadata_simple'
-                    detectEnumerations = true
-                    maxEnumerations = 20
-                    calculateSummaryMetadata = true
-                    sampleThreshold = 1000
-                    samplePercent = 10
-                })
+    void 'test Import Simple Database With Summary Metadata With Sampling'() {
+        given:
+        setupData()
 
+        when:
+        final DataModel dataModel = importDataModelAndRetrieveFromDatabase(
+            createDatabaseImportParameters(databaseHost, databasePort).tap {
+                databaseNames = 'metadata_simple'
+                detectEnumerations = true
+                maxEnumerations = 20
+                calculateSummaryMetadata = true
+                sampleThreshold = 1000
+                samplePercent = 10
+            })
+
+        then:
         checkBasic(dataModel)
         checkOrganisationEnumerated(dataModel)
         checkSampleSummaryMetadata(dataModel)
 
+        when:
         final DataClass publicSchema = dataModel.childDataClasses.first()
+
+        then:
         assertEquals 'Number of child tables/dataclasses', 7, publicSchema.dataClasses?.size()
 
+        when:
         final Set<DataClass> dataClasses = publicSchema.dataClasses
         final DataClass sampleTable = dataClasses.find {it.label == 'bigger_sample'}
 
+        then:
         assertEquals 'Sample Number of columns/dataElements', 4, sampleTable.dataElements.size()
 
+        when:
         final DataElement sample_bigint = sampleTable.dataElements.find{it.label == "sample_bigint"}
+
+        then:
         assertEquals 'description of summary metadata for sample_bigint',
                 'Estimated Value Distribution (calculated by sampling 10% of rows)',
                 sample_bigint.summaryMetadata[0].description
 
+        when:
         final DataElement sample_decimal = sampleTable.dataElements.find{it.label == "sample_decimal"}
+
+        then:
         assertEquals 'description of summary metadata for sample_decimal',
                 'Estimated Value Distribution (calculated by sampling 10% of rows)',
                 sample_decimal.summaryMetadata[0].description
 
+        when:
         final DataElement sample_date = sampleTable.dataElements.find{it.label == "sample_date"}
+
+        then:
         assertEquals 'description of summary metadata for sample_date',
                 'Estimated Value Distribution (calculated by sampling 10% of rows)',
                 sample_date.summaryMetadata[0].description
@@ -255,14 +313,44 @@ class SqlServerDatabaseDataModelImporterProviderServiceTest
          * Enumeration type determined using a sample, so we can't be certain that there will be exactly 15 results.
          * But there should be between 1 and 15 values, and any values must be in our expected list.
          */
+        when:
         final EnumerationType sampleVarcharEnumerationType = sampleTable.findDataElement('sample_varchar').dataType
+
+        then:
         assertTrue 'One or more 0 enumeration values', sampleVarcharEnumerationType.enumerationValues.size() >= 1
         assertTrue '15 or fewer enumeration values', sampleVarcharEnumerationType.enumerationValues.size() <= 15
         sampleVarcharEnumerationType.enumerationValues.each {
             assertTrue 'Enumeration key in expected set',
                     ['ENUM0', 'ENUM1', 'ENUM2', 'ENUM3', 'ENUM4', 'ENUM5', 'ENUM6', 'ENUM7', 'ENUM8', 'ENUM9', 'ENUM10', 'ENUM11', 'ENUM12', 'ENUM13', 'ENUM14'].contains(it.key)
         }
+    }
 
+    void 'test Import Simple Database With Summary Metadata and export to json'() {
+        given:
+        setupData()
+
+        when:
+        final DataModel dataModel = importDataModelAndRetrieveFromDatabase(
+            createDatabaseImportParameters(databaseHost, databasePort).tap {
+                databaseNames = 'metadata_simple'
+                detectEnumerations = true
+                maxEnumerations = 20
+                calculateSummaryMetadata = true
+            })
+
+        then:
+        checkBasic(dataModel)
+        checkOrganisationEnumerated(dataModel)
+        checkOrganisationSummaryMetadata(dataModel)
+        checkSampleSummaryMetadata(dataModel)
+        checkBiggerSampleSummaryMetadata(dataModel)
+
+        when:
+        ByteArrayOutputStream baos = dataModelJsonExporterService.exportDataModel(UnloggedUser.instance, dataModel)
+        String exportedModel = new String(baos.toByteArray(), Charset.defaultCharset())
+
+        then:
+        validateExportedModel('simpleSummaryMetadata', exportedModel)
     }
 
     private void checkBasic(DataModel dataModel) {

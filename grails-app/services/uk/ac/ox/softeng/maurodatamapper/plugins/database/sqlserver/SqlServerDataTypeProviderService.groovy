@@ -23,7 +23,7 @@ import uk.ac.ox.softeng.maurodatamapper.datamodel.provider.DefaultDataTypeProvid
 import uk.ac.ox.softeng.maurodatamapper.datamodel.rest.transport.DefaultDataType
 
 // @CompileStatic
-class SqlServerDataTypeProvider implements DefaultDataTypeProvider {
+class SqlServerDataTypeProviderService implements DefaultDataTypeProvider {
 
     @Override
     String getDisplayName() {

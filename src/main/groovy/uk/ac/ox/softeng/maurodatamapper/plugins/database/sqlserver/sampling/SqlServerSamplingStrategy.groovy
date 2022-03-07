@@ -15,7 +15,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package uk.ac.ox.softeng.maurodatamapper.plugins.database.sqlserver
+package uk.ac.ox.softeng.maurodatamapper.plugins.database.sqlserver.sampling
 
 import uk.ac.ox.softeng.maurodatamapper.plugins.database.SamplingStrategy
 

@@ -20,12 +20,13 @@ package uk.ac.ox.softeng.maurodatamapper.plugins.database.sqlserver
 import uk.ac.ox.softeng.maurodatamapper.core.container.Folder
 import uk.ac.ox.softeng.maurodatamapper.datamodel.DataModel
 import uk.ac.ox.softeng.maurodatamapper.datamodel.item.DataClass
-import uk.ac.ox.softeng.maurodatamapper.datamodel.item.DataElement
 import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.DataType
 import uk.ac.ox.softeng.maurodatamapper.datamodel.provider.DefaultDataTypeProvider
 import uk.ac.ox.softeng.maurodatamapper.plugins.database.AbstractDatabaseDataModelImporterProviderService
 import uk.ac.ox.softeng.maurodatamapper.plugins.database.RemoteDatabaseDataModelImporterProviderService
 import uk.ac.ox.softeng.maurodatamapper.plugins.database.SamplingStrategy
+import uk.ac.ox.softeng.maurodatamapper.plugins.database.sqlserver.parameters.SqlServerDatabaseDataModelImporterProviderServiceParameters
+import uk.ac.ox.softeng.maurodatamapper.plugins.database.sqlserver.sampling.SqlServerSamplingStrategy
 import uk.ac.ox.softeng.maurodatamapper.plugins.database.summarymetadata.AbstractIntervalHelper
 import uk.ac.ox.softeng.maurodatamapper.security.User
 
@@ -42,12 +43,12 @@ class SqlServerDatabaseDataModelImporterProviderService
     extends AbstractDatabaseDataModelImporterProviderService<SqlServerDatabaseDataModelImporterProviderServiceParameters>
     implements RemoteDatabaseDataModelImporterProviderService {
 
-    @Autowired
-    SqlServerDataTypeProvider sqlServerDataTypeProvider
+    SqlServerDataTypeProviderService sqlServerDataTypeProviderService
 
     @Override
     SamplingStrategy getSamplingStrategy(SqlServerDatabaseDataModelImporterProviderServiceParameters parameters) {
-        new SqlServerSamplingStrategy(parameters.sampleThreshold ?: DEFAULT_SAMPLE_THRESHOLD, parameters.samplePercent ?: DEFAULT_SAMPLE_PERCENTAGE)
+        new SqlServerSamplingStrategy(parameters.sampleThreshold ?: DEFAULT_SAMPLE_THRESHOLD,
+                                      parameters.samplePercent ?: DEFAULT_SAMPLE_PERCENTAGE)
     }
 
     @Override
@@ -82,7 +83,7 @@ class SqlServerDatabaseDataModelImporterProviderService
 
     @Override
     DefaultDataTypeProvider getDefaultDataTypeProvider() {
-        sqlServerDataTypeProvider
+        sqlServerDataTypeProviderService
     }
 
     @Override
