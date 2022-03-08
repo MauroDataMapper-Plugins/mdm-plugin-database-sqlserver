@@ -24,21 +24,24 @@ import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.DataType
 import uk.ac.ox.softeng.maurodatamapper.datamodel.provider.DefaultDataTypeProvider
 import uk.ac.ox.softeng.maurodatamapper.plugins.database.AbstractDatabaseDataModelImporterProviderService
 import uk.ac.ox.softeng.maurodatamapper.plugins.database.RemoteDatabaseDataModelImporterProviderService
-import uk.ac.ox.softeng.maurodatamapper.plugins.database.SamplingStrategy
+import uk.ac.ox.softeng.maurodatamapper.plugins.database.calculation.CalculationStrategy
+import uk.ac.ox.softeng.maurodatamapper.plugins.database.calculation.SamplingStrategy
+import uk.ac.ox.softeng.maurodatamapper.plugins.database.sqlserver.calculation.SqlServerCalculationStrategy
 import uk.ac.ox.softeng.maurodatamapper.plugins.database.sqlserver.parameters.SqlServerDatabaseDataModelImporterProviderServiceParameters
-import uk.ac.ox.softeng.maurodatamapper.plugins.database.sqlserver.sampling.SqlServerSamplingStrategy
+import uk.ac.ox.softeng.maurodatamapper.plugins.database.sqlserver.calculation.SqlServerSamplingStrategy
 import uk.ac.ox.softeng.maurodatamapper.plugins.database.summarymetadata.AbstractIntervalHelper
 import uk.ac.ox.softeng.maurodatamapper.security.User
 
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
-import org.springframework.beans.factory.annotation.Autowired
 
 import java.sql.Connection
 import java.sql.PreparedStatement
 import java.time.format.DateTimeFormatter
+import java.time.temporal.TemporalAccessor
 
 @Slf4j
-// @CompileStatic
+@CompileStatic
 class SqlServerDatabaseDataModelImporterProviderService
     extends AbstractDatabaseDataModelImporterProviderService<SqlServerDatabaseDataModelImporterProviderServiceParameters>
     implements RemoteDatabaseDataModelImporterProviderService {
@@ -46,9 +49,13 @@ class SqlServerDatabaseDataModelImporterProviderService
     SqlServerDataTypeProviderService sqlServerDataTypeProviderService
 
     @Override
-    SamplingStrategy getSamplingStrategy(SqlServerDatabaseDataModelImporterProviderServiceParameters parameters) {
-        new SqlServerSamplingStrategy(parameters.sampleThreshold ?: DEFAULT_SAMPLE_THRESHOLD,
-                                      parameters.samplePercent ?: DEFAULT_SAMPLE_PERCENTAGE)
+    SamplingStrategy getSamplingStrategy(String schema, String table, SqlServerDatabaseDataModelImporterProviderServiceParameters parameters) {
+        new SqlServerSamplingStrategy(schema, table, parameters)
+    }
+
+    @Override
+    CalculationStrategy getCalculationStrategy(SqlServerDatabaseDataModelImporterProviderServiceParameters parameters) {
+       new SqlServerCalculationStrategy(parameters)
     }
 
     @Override
@@ -172,46 +179,18 @@ class SqlServerDatabaseDataModelImporterProviderService
     }
 
     @Override
-    boolean isColumnPossibleEnumeration(DataType dataType) {
-        dataType.domainType == 'PrimitiveType' && ["char", "varchar", "nchar", "nvarchar"].contains(dataType.label)
-    }
-
-    @Override
-    boolean isColumnForDateSummary(DataType dataType) {
-        dataType.domainType == 'PrimitiveType' && ["date", "smalldatetime", "datetime", "datetime2"].contains(dataType.label)
-    }
-
-    @Override
-    boolean isColumnForDecimalSummary(DataType dataType) {
-        dataType.domainType == 'PrimitiveType' && ["decimal", "numeric"].contains(dataType.label)
-    }
-
-    @Override
-    boolean isColumnForIntegerSummary(DataType dataType) {
-        dataType.domainType == 'PrimitiveType' && ["tinyint", "smallint", "int"].contains(dataType.label)
-    }
-
-    @Override
-    boolean isColumnForLongSummary(DataType dataType) {
-        dataType.domainType == 'PrimitiveType' && ["bigint"].contains(dataType.label)
-    }
-
-    String columnRangeDistributionQueryString(DataType dataType,
-                                              AbstractIntervalHelper intervalHelper,
-                                              String columnName, String tableName, String schemaName) {
-        SamplingStrategy samplingStrategy = new SamplingStrategy()
-        columnRangeDistributionQueryString(samplingStrategy, dataType, intervalHelper, columnName, tableName, schemaName)
-    }
-
-    @Override
     String columnRangeDistributionQueryString(SamplingStrategy samplingStrategy, DataType dataType,
                                               AbstractIntervalHelper intervalHelper,
                                               String columnName, String tableName, String schemaName) {
         List<String> selects = intervalHelper.intervals.collect {
-            "SELECT '${it.key}' AS interval_label, ${formatDataType(dataType, it.value.aValue)} AS interval_start, ${formatDataType(dataType, it.value.bValue)} AS interval_end"
+            "SELECT '${it.key}' AS interval_label, ${formatDataType(dataType, it.value.aValue)} AS interval_start, ${formatDataType(dataType, it.value.bValue)} AS interval_end".toString()
         }
 
         rangeDistributionQueryString(samplingStrategy, selects, columnName, tableName, schemaName)
+    }
+
+    boolean isColumnForDateSummary(DataType dataType) {
+        dataType.domainType == 'PrimitiveType' && ["date", "smalldatetime", "datetime", "datetime2"].contains(dataType.label)
     }
 
     /**
@@ -225,7 +204,7 @@ class SqlServerDatabaseDataModelImporterProviderService
      */
     String formatDataType(DataType dataType, Object value) {
         if (isColumnForDateSummary(dataType)){
-            "CONVERT(DATETIME, '${DateTimeFormatter.ISO_LOCAL_DATE_TIME.format(value)}', 126)"
+            "CONVERT(DATETIME, '${DateTimeFormatter.ISO_LOCAL_DATE_TIME.format(value as TemporalAccessor)}', 126)"
         } else {
             "${value}"
         }
@@ -260,7 +239,7 @@ class SqlServerDatabaseDataModelImporterProviderService
         FROM #interval
         LEFT JOIN
         ${escapeIdentifier(schemaName)}.${escapeIdentifier(tableName)} 
-        ${samplingStrategy.samplingClause()}
+        ${samplingStrategy.samplingClause(SamplingStrategy.Type.SUMMARY_METADATA)}
         ON ${escapeIdentifier(schemaName)}.${escapeIdentifier(tableName)}.${escapeIdentifier(columnName)} >= #interval.interval_start 
         AND ${escapeIdentifier(schemaName)}.${escapeIdentifier(tableName)}.${escapeIdentifier(columnName)} < #interval.interval_end
         GROUP BY interval_label, interval_start
@@ -305,6 +284,7 @@ class SqlServerDatabaseDataModelImporterProviderService
      * @param dataModel
      * @param connection
      */
+    @SuppressWarnings('SqlResolve')
     @Override
     void addMetadata(DataModel dataModel, Connection connection) {
         //Get extended properties for the database

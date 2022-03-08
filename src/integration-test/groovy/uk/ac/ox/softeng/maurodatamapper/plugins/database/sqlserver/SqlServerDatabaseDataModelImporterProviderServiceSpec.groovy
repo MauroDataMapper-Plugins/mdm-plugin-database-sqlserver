@@ -25,15 +25,12 @@ import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.EnumerationType
 import uk.ac.ox.softeng.maurodatamapper.datamodel.provider.exporter.DataModelJsonExporterService
 import uk.ac.ox.softeng.maurodatamapper.plugins.database.sqlserver.parameters.SqlServerDatabaseDataModelImporterProviderServiceParameters
 import uk.ac.ox.softeng.maurodatamapper.security.basic.UnloggedUser
-import uk.ac.ox.softeng.maurodatamapper.test.json.JsonComparer
 import uk.ac.ox.softeng.maurodatamapper.util.Utils
 
-import com.google.common.base.CaseFormat
 import grails.gorm.transactions.Rollback
 import grails.testing.mixin.integration.Integration
 import groovy.json.JsonSlurper
 import groovy.util.logging.Slf4j
-import org.junit.Assert
 import spock.lang.Ignore
 
 import java.nio.charset.Charset
@@ -198,7 +195,7 @@ class SqlServerDatabaseDataModelImporterProviderServiceSpec
         assertEquals 'Number of char datatypes', 1, dataModel.dataTypes.findAll {it.domainType == 'PrimitiveType' && it.label == 'char'}.size()
     }
 
-    void 'test Import Simple Database With Enumerations'() {
+    void 'EV : test Import Simple Database With Enumerations'() {
         given:
         setupData()
 
@@ -231,7 +228,7 @@ class SqlServerDatabaseDataModelImporterProviderServiceSpec
 
     }
 
-    void 'test Import Simple Database With Summary Metadata'() {
+    void 'SM01 : test Import Simple Database With Summary Metadata'() {
         given:
         setupData()
 
@@ -242,6 +239,10 @@ class SqlServerDatabaseDataModelImporterProviderServiceSpec
                 detectEnumerations = true
                 maxEnumerations = 20
                 calculateSummaryMetadata = true
+                summaryMetadataUseSampling = false
+                enumerationValueUseSampling = false
+                ignoreColumnsForSummaryMetadata = '.*id'
+                ignoreColumnsForEnumerations = '.*id'
             })
 
         then:
@@ -252,7 +253,7 @@ class SqlServerDatabaseDataModelImporterProviderServiceSpec
         checkBiggerSampleSummaryMetadata(dataModel)
     }
 
-    void 'test Import Simple Database With Summary Metadata With Sampling'() {
+    void 'SM02 : test Import Simple Database With Summary Metadata With Sampling'() {
         given:
         setupData()
 
@@ -263,8 +264,14 @@ class SqlServerDatabaseDataModelImporterProviderServiceSpec
                 detectEnumerations = true
                 maxEnumerations = 20
                 calculateSummaryMetadata = true
-                sampleThreshold = 1000
-                samplePercent = 10
+                summaryMetadataUseSampling = true
+                summaryMetadataSampleThreshold = 1000
+                summaryMetadataSamplePercent = 10
+                enumerationValueUseSampling = true
+                enumerationValueSampleThreshold = 1000
+                enumerationValueSamplePercent = 10
+                ignoreColumnsForSummaryMetadata = '.*id'
+                ignoreColumnsForEnumerations = '.*id'
             })
 
         then:
@@ -325,7 +332,7 @@ class SqlServerDatabaseDataModelImporterProviderServiceSpec
         }
     }
 
-    void 'test Import Simple Database With Summary Metadata and export to json'() {
+    void 'SM03 : test Import Simple Database With Summary Metadata With Sampling disabled but threshold set'() {
         given:
         setupData()
 
@@ -336,6 +343,84 @@ class SqlServerDatabaseDataModelImporterProviderServiceSpec
                 detectEnumerations = true
                 maxEnumerations = 20
                 calculateSummaryMetadata = true
+                summaryMetadataUseSampling = false
+                summaryMetadataSampleThreshold = 1000
+                summaryMetadataSamplePercent = 10
+                enumerationValueUseSampling = true
+                enumerationValueSampleThreshold = 1000
+                enumerationValueSamplePercent = 10
+                ignoreColumnsForSummaryMetadata = '.*id'
+                ignoreColumnsForEnumerations = '.*id'
+            })
+
+        then:
+        checkBasic(dataModel)
+        checkOrganisationEnumerated(dataModel)
+        checkSampleSummaryMetadata(dataModel)
+
+        when:
+        final DataClass publicSchema = dataModel.childDataClasses.first()
+
+        then:
+        assertEquals 'Number of child tables/dataclasses', 7, publicSchema.dataClasses?.size()
+
+        // All of the following had row count > threshold so we would sample but sampling has been disabled
+        when:
+        final Set<DataClass> dataClasses = publicSchema.dataClasses
+        final DataClass sampleTable = dataClasses.find {it.label == 'bigger_sample'}
+
+        then:
+        assertEquals 'Sample Number of columns/dataElements', 4, sampleTable.dataElements.size()
+
+        when:
+        final DataElement sample_bigint = sampleTable.dataElements.find{it.label == "sample_bigint"}
+
+        then:
+        assertEquals 'Zero summaryMetadata for sample_big_int', 0, sample_bigint.summaryMetadata.size()
+
+        when:
+        final DataElement sample_decimal = sampleTable.dataElements.find{it.label == "sample_decimal"}
+
+        then:
+        assertEquals 'Zero summaryMetadata for sample_decimal', 0, sample_bigint.summaryMetadata.size()
+
+        when:
+        final DataElement sample_date = sampleTable.dataElements.find{it.label == "sample_date"}
+
+        then:
+        assertEquals 'Zero summaryMetadata for sample_date', 0, sample_bigint.summaryMetadata.size()
+
+        /**
+         * Enumeration type determined using a sample, so we can't be certain that there will be exactly 15 results.
+         * But there should be between 1 and 15 values, and any values must be in our expected list.
+         */
+        when:
+        final EnumerationType sampleVarcharEnumerationType = sampleTable.findDataElement('sample_varchar').dataType
+
+        then:
+        assertTrue 'One or more 0 enumeration values', sampleVarcharEnumerationType.enumerationValues.size() >= 1
+        assertTrue '15 or fewer enumeration values', sampleVarcharEnumerationType.enumerationValues.size() <= 15
+        sampleVarcharEnumerationType.enumerationValues.each {
+            assertTrue 'Enumeration key in expected set',
+                       ['ENUM0', 'ENUM1', 'ENUM2', 'ENUM3', 'ENUM4', 'ENUM5', 'ENUM6', 'ENUM7', 'ENUM8', 'ENUM9', 'ENUM10', 'ENUM11', 'ENUM12', 'ENUM13', 'ENUM14'].contains(it.key)
+        }
+    }
+
+    void 'SM04 : test Import Simple Database With Summary Metadata and export to json'() {
+        given:
+        setupData()
+
+        when:
+        final DataModel dataModel = importDataModelAndRetrieveFromDatabase(
+            createDatabaseImportParameters(databaseHost, databasePort).tap {
+                databaseNames = 'metadata_simple'
+                detectEnumerations = true
+                maxEnumerations = 20
+                calculateSummaryMetadata = true
+                summaryMetadataUseSampling = false
+                enumerationValueUseSampling = false
+                ignoreColumnsForSummaryMetadata = '.*id'
+                ignoreColumnsForEnumerations = '.*id'
             })
 
         then:
@@ -614,16 +699,13 @@ class SqlServerDatabaseDataModelImporterProviderServiceSpec
 
         assertEquals 'Sample Number of columns/dataElements', expectedColumns.size(), sampleTable.dataElements.size()
 
-        expectedColumns.each {columnName ->
+        DataElement deId = sampleTable.dataElements.find{it.label == 'id'}
+        assertEquals 'Zero summaryMetadata', 0, deId.summaryMetadata.size()
+
+        expectedColumns.findAll {it != 'id'}.each {columnName ->
             DataElement de = sampleTable.dataElements.find{it.label == columnName}
             assertEquals 'One summaryMetadata', 1, de.summaryMetadata.size()
         }
-
-        final DataElement id = sampleTable.dataElements.find{it.label == "id"}
-        //Expect id to have contiguous values from 1 to 201
-        assertEquals 'reportValue for id',
-                '{"0 - 20":19,"20 - 40":20,"40 - 60":20,"60 - 80":20,"80 - 100":20,"100 - 120":20,"120 - 140":20,"140 - 160":20,"160 - 180":20,"180 - 200":20,"200 - 220":2}',
-                id.summaryMetadata[0].summaryMetadataReports[0].reportValue
 
         //sample_tinyint
         final DataElement sample_tinyint = sampleTable.dataElements.find{it.label == "sample_tinyint"}

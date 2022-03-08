@@ -15,21 +15,22 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package uk.ac.ox.softeng.maurodatamapper.plugins.database.sqlserver.sampling
+package uk.ac.ox.softeng.maurodatamapper.plugins.database.sqlserver.calculation
 
-import uk.ac.ox.softeng.maurodatamapper.plugins.database.SamplingStrategy
+import uk.ac.ox.softeng.maurodatamapper.plugins.database.DatabaseDataModelWithSamplingImporterProviderServiceParameters
+import uk.ac.ox.softeng.maurodatamapper.plugins.database.calculation.SamplingStrategy
 
 class SqlServerSamplingStrategy extends SamplingStrategy {
 
-    SqlServerSamplingStrategy(Integer threshold, BigDecimal percentage) {
-        super(threshold, percentage)
+    SqlServerSamplingStrategy(String schema, String table, DatabaseDataModelWithSamplingImporterProviderServiceParameters samplingImporterProviderServiceParameters) {
+        super(schema, table, samplingImporterProviderServiceParameters)
     }
 
     /**
      * SQL Server can only use TABLESAMPLE on tables
      * @return
      */
-    boolean canSample() {
+    boolean canSampleTypeType() {
         this.tableType == 'BASE TABLE'
     }
 
@@ -38,11 +39,7 @@ class SqlServerSamplingStrategy extends SamplingStrategy {
      * @return
      */
     @Override
-    String samplingClause() {
-        if (this.useSampling()) {
-            " TABLESAMPLE (${this.percentage} PERCENT)"
-        } else {
-            ""
-        }
+    String samplingClause(Type type) {
+        this.useSamplingFor(type) ? " TABLESAMPLE (${this.smPercentage} PERCENT)" : ''
     }
 }
