@@ -20,10 +20,17 @@ package uk.ac.ox.softeng.maurodatamapper.plugins.database.sqlserver.calculation
 import uk.ac.ox.softeng.maurodatamapper.plugins.database.DatabaseDataModelWithSamplingImporterProviderServiceParameters
 import uk.ac.ox.softeng.maurodatamapper.plugins.database.calculation.SamplingStrategy
 
+import org.apache.commons.lang3.RandomUtils
+
 class SqlServerSamplingStrategy extends SamplingStrategy {
+
+    // Allows the same data to be returned each time the same query is called on the table.
+    // This will allow consistency when asking multiple questions of the same dataset
+    private int repeatSeed
 
     SqlServerSamplingStrategy(String schema, String table, DatabaseDataModelWithSamplingImporterProviderServiceParameters samplingImporterProviderServiceParameters) {
         super(schema, table, samplingImporterProviderServiceParameters)
+        repeatSeed = RandomUtils.nextInt(0, Integer.MAX_VALUE)
     }
 
     /**
@@ -40,6 +47,15 @@ class SqlServerSamplingStrategy extends SamplingStrategy {
      */
     @Override
     String samplingClause(Type type) {
-        this.useSamplingFor(type) ? " TABLESAMPLE (${this.smPercentage} PERCENT)" : ''
+        BigDecimal percentage
+        switch (type) {
+            case Type.SUMMARY_METADATA:
+                percentage = smPercentage
+                break
+            case Type.ENUMERATION_VALUES:
+                percentage = evPercentage
+                break
+        }
+        this.useSamplingFor(type) ? " TABLESAMPLE (${percentage} PERCENT) REPEATABLE (${this.repeatSeed}) " : ''
     }
 }

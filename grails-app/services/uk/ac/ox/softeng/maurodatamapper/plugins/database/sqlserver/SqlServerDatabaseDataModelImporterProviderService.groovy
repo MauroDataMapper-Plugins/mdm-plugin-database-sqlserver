@@ -27,8 +27,8 @@ import uk.ac.ox.softeng.maurodatamapper.plugins.database.RemoteDatabaseDataModel
 import uk.ac.ox.softeng.maurodatamapper.plugins.database.calculation.CalculationStrategy
 import uk.ac.ox.softeng.maurodatamapper.plugins.database.calculation.SamplingStrategy
 import uk.ac.ox.softeng.maurodatamapper.plugins.database.sqlserver.calculation.SqlServerCalculationStrategy
-import uk.ac.ox.softeng.maurodatamapper.plugins.database.sqlserver.parameters.SqlServerDatabaseDataModelImporterProviderServiceParameters
 import uk.ac.ox.softeng.maurodatamapper.plugins.database.sqlserver.calculation.SqlServerSamplingStrategy
+import uk.ac.ox.softeng.maurodatamapper.plugins.database.sqlserver.parameters.SqlServerDatabaseDataModelImporterProviderServiceParameters
 import uk.ac.ox.softeng.maurodatamapper.plugins.database.summarymetadata.AbstractIntervalHelper
 import uk.ac.ox.softeng.maurodatamapper.security.User
 
@@ -163,19 +163,24 @@ class SqlServerDatabaseDataModelImporterProviderService
     List<String> approxCountQueryString(String tableName, String schemaName = null) {
         //use COUNT_BIG rather than COUNT
         String schemaIdentifier = schemaName ? "${escapeIdentifier(schemaName)}." : ""
-        List<String> queryStrings = [
-                "SELECT COUNT_BIG(*) AS approx_count FROM ${schemaIdentifier}${escapeIdentifier(tableName)}".toString()
-                ]
+        String fullTableName = "${schemaIdentifier}${escapeIdentifier(tableName)}"
+        [
+            """SELECT SUM(dm_db_partition_stats.row_count) AS approx_count
+FROM sys.dm_db_partition_stats
+WHERE object_id = OBJECT_ID('${fullTableName}')
+AND (index_id = 0 OR index_id = 1)""".stripIndent().toString(),
+            "SELECT COUNT_BIG(*) AS approx_count FROM ${fullTableName}".toString()
+        ]
+    }
 
-        String query = """
-        SELECT SUM(dm_db_partition_stats.row_count) AS approx_count
-        FROM sys.dm_db_partition_stats
-        WHERE object_id = OBJECT_ID('${tableName}')
-        AND (index_id = 0 OR index_id = 1)
-        """
-
-        queryStrings.push(query.toString())
-        queryStrings
+    @Override
+    String distinctColumnValuesQueryString(CalculationStrategy calculationStrategy, SamplingStrategy samplingStrategy, String columnName, String tableName,
+                                           String schemaName = null) {
+        String schemaIdentifier = schemaName ? "${escapeIdentifier(schemaName)}." : ""
+        """SELECT TOP (${calculationStrategy.maxEnumerations + 1}) ${escapeIdentifier(columnName)} AS distinct_value
+FROM ${schemaIdentifier}${escapeIdentifier(tableName)} ${samplingStrategy.samplingClause(SamplingStrategy.Type.ENUMERATION_VALUES)}
+WHERE ${escapeIdentifier(columnName)} <> ''
+GROUP BY ${escapeIdentifier(columnName)}""".stripIndent()
     }
 
     @Override
@@ -183,7 +188,9 @@ class SqlServerDatabaseDataModelImporterProviderService
                                               AbstractIntervalHelper intervalHelper,
                                               String columnName, String tableName, String schemaName) {
         List<String> selects = intervalHelper.intervals.collect {
-            "SELECT '${it.key}' AS interval_label, ${formatDataType(dataType, it.value.aValue)} AS interval_start, ${formatDataType(dataType, it.value.bValue)} AS interval_end".toString()
+            """SELECT '${it.key}' AS interval_label, ${formatDataType(dataType, it.value.aValue)} AS interval_start, ${formatDataType(dataType, it.value.bValue)} AS 
+interval_end"""
+                .toString()
         }
 
         rangeDistributionQueryString(samplingStrategy, selects, columnName, tableName, schemaName)
@@ -271,7 +278,8 @@ class SqlServerDatabaseDataModelImporterProviderService
 
         groupedSchemas.collect {String schema, List<Map<String, Object>> schemaResults ->
             log.debug 'Importing database {} schema {}', databaseName, schema
-            final DataModel dataModel = importDataModelFromResults(currentUser, folder, schema, parameters.databaseDialect, schemaResults, false)
+            final DataModel dataModel = importDataModelFromResults(currentUser, folder, schema, parameters.databaseDialect, schemaResults, false,
+                                                                   parameters.getListOfTableRegexesToIgnore())
             if (parameters.dataModelNameSuffix) dataModel.aliasesString = databaseName
             updateDataModelWithDatabaseSpecificInformation(dataModel, connection)
             dataModel
