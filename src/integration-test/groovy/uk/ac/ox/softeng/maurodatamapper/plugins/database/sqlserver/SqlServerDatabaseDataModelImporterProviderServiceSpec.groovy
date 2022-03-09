@@ -32,6 +32,7 @@ import grails.testing.mixin.integration.Integration
 import groovy.json.JsonSlurper
 import groovy.util.logging.Slf4j
 import spock.lang.Ignore
+import spock.lang.Requires
 
 import java.nio.charset.Charset
 import java.nio.file.Files
@@ -80,71 +81,6 @@ class SqlServerDatabaseDataModelImporterProviderServiceSpec
     @Override
     SqlServerDatabaseDataModelImporterProviderService getImporterInstance() {
         sqlServerDatabaseDataModelImporterProviderService
-    }
-
-
-    @Ignore('no credentials')
-    void 'test Connection To Ouh'() {
-        given:
-        setupData()
-        SqlServerDatabaseDataModelImporterProviderServiceParameters params = new SqlServerDatabaseDataModelImporterProviderServiceParameters().tap {
-            databaseHost = 'oxnetdwp01.oxnet.nhs.uk'
-            domain = 'OXNET'
-            authenticationScheme = 'ntlm'
-            integratedSecurity = true
-            databaseUsername = ''
-            databasePassword = ''
-            databaseNames = 'LIMS'
-            schemaNames = 'raw'
-            databaseSSL = false
-            folderId = folder.getId()
-        }
-
-        when:
-        DataModel lims = importDataModelAndRetrieveFromDatabase(params)
-
-        then:
-        lims
-    }
-
-    @Ignore('no credentials')
-    void 'test Performance And Export As Json'() {
-        given:
-        setupData()
-        SqlServerDatabaseDataModelImporterProviderServiceParameters params = new SqlServerDatabaseDataModelImporterProviderServiceParameters().tap {
-            databaseHost = 'oxnetdwp01.oxnet.nhs.uk'
-            domain = 'OXNET'
-            authenticationScheme = 'ntlm'
-            integratedSecurity = true
-            databaseUsername = ''
-            databasePassword = ''
-            databaseNames = 'LIMS'
-            schemaNames = 'raw'
-            databaseSSL = false
-            folderId = folder.getId()
-            detectEnumerations = true
-            maxEnumerations = 20
-            calculateSummaryMetadata = true
-            sampleThreshold = 100000
-            samplePercent = 10
-        }
-        when:
-        long startTime = System.currentTimeMillis()
-        DataModel lims = importDataModelAndRetrieveFromDatabase(params)
-        log.info('Import complete in {}', Utils.timeTaken(startTime))
-
-        then:
-        lims
-
-        when:
-        ByteArrayOutputStream baos = dataModelJsonExporterService.exportDataModel(UnloggedUser.instance, lims)
-        Path p = Paths.get('build/export')
-        Files.createDirectories(p)
-        Path f = p.resolve('modules.json')
-        Files.write(f, baos.toByteArray())
-
-        then:
-        true
     }
 
     void 'test Import Simple Database'() {
