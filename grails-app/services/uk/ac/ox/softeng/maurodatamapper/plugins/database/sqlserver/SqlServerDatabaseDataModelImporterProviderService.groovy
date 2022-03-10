@@ -168,7 +168,7 @@ class SqlServerDatabaseDataModelImporterProviderService
             """SELECT SUM(dm_db_partition_stats.row_count) AS approx_count
 FROM sys.dm_db_partition_stats
 WHERE object_id = OBJECT_ID('${fullTableName}')
-AND (index_id = 0 OR index_id = 1)""".stripIndent().toString(),
+AND (index_id = 0 OR index_id = 1)""".stripIndent(),
             "SELECT COUNT_BIG(*) AS approx_count FROM ${fullTableName}".toString()
         ]
     }
@@ -188,9 +188,10 @@ GROUP BY ${escapeIdentifier(columnName)}""".stripIndent()
                                               AbstractIntervalHelper intervalHelper,
                                               String columnName, String tableName, String schemaName) {
         List<String> selects = intervalHelper.intervals.collect {
-            """SELECT '${it.key}' AS interval_label, ${formatDataType(dataType, it.value.aValue)} AS interval_start, ${formatDataType(dataType, it.value.bValue)} AS 
-interval_end"""
-                .toString()
+            """SELECT 
+  '${it.key}' AS interval_label, 
+  ${formatDataType(dataType, it.value.aValue)} AS interval_start, 
+  ${formatDataType(dataType, it.value.bValue)} AS interval_end""".stripIndent()
         }
 
         rangeDistributionQueryString(samplingStrategy, selects, columnName, tableName, schemaName)
@@ -238,22 +239,20 @@ interval_end"""
      */
     private String rangeDistributionQueryString(SamplingStrategy samplingStrategy, List<String> selects, String columnName,
                                                 String tableName, String schemaName) {
-        String intervals = selects.join(" UNION ")
-
-        String sql = "WITH #interval AS (${intervals})" +
+        String intervals = selects.join("\nUNION\n")
+String column = "${escapeIdentifier(schemaName)}.${escapeIdentifier(tableName)}.${escapeIdentifier(columnName)}"
+        String table = "${escapeIdentifier(schemaName)}.${escapeIdentifier(tableName)}"
+        "WITH intervals AS (\n${intervals}\n)" +
                 """
-        SELECT interval_label, ${samplingStrategy.scaleFactor()} * COUNT_BIG(${escapeIdentifier(columnName)}) AS interval_count
-        FROM #interval
-        LEFT JOIN
-        ${escapeIdentifier(schemaName)}.${escapeIdentifier(tableName)} 
-        ${samplingStrategy.samplingClause(SamplingStrategy.Type.SUMMARY_METADATA)}
-        ON ${escapeIdentifier(schemaName)}.${escapeIdentifier(tableName)}.${escapeIdentifier(columnName)} >= #interval.interval_start 
-        AND ${escapeIdentifier(schemaName)}.${escapeIdentifier(tableName)}.${escapeIdentifier(columnName)} < #interval.interval_end
-        GROUP BY interval_label, interval_start
-        ORDER BY interval_start ASC;
-        """
-
-        sql.stripIndent()
+SELECT 
+    interval_label, 
+    ${samplingStrategy.scaleFactor()} * COUNT_BIG(${escapeIdentifier(columnName)}) AS interval_count
+FROM intervals
+LEFT JOIN ${table} ${samplingStrategy.samplingClause(SamplingStrategy.Type.SUMMARY_METADATA)}
+    ON ${column} >= intervals.interval_start AND ${column} < intervals.interval_end
+GROUP BY interval_label, interval_start
+ORDER BY interval_start ASC;
+        """.stripIndent()
     }
 
     @Override

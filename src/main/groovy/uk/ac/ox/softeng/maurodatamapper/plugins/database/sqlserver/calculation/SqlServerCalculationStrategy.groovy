@@ -14,26 +14,26 @@ class SqlServerCalculationStrategy extends CalculationStrategy{
 
     @Override
     boolean isColumnPossibleEnumeration(DataType dataType) {
-        dataType.domainType == 'PrimitiveType' && ["char", "varchar", "nchar", "nvarchar"].contains(dataType.label)
+        dataType.domainType == 'PrimitiveType' && ['char', 'varchar', 'nchar', 'nvarchar'].contains(dataType.label)
     }
 
     @Override
     boolean isColumnForDateSummary(DataType dataType) {
-        dataType.domainType == 'PrimitiveType' && ["date", "smalldatetime", "datetime", "datetime2"].contains(dataType.label)
+        dataType.domainType == 'PrimitiveType' && ['date', 'smalldatetime', 'datetime', 'datetime2'].contains(dataType.label)
     }
 
     @Override
     boolean isColumnForDecimalSummary(DataType dataType) {
-        dataType.domainType == 'PrimitiveType' && ["decimal", "numeric"].contains(dataType.label)
+        dataType.domainType == 'PrimitiveType' && ['decimal', 'numeric'].contains(dataType.label)
     }
 
     @Override
     boolean isColumnForIntegerSummary(DataType dataType) {
-        dataType.domainType == 'PrimitiveType' && ["tinyint", "smallint", "int"].contains(dataType.label)
+        dataType.domainType == 'PrimitiveType' && ['tinyint', 'smallint', 'int'].contains(dataType.label)
     }
 
     @Override
     boolean isColumnForLongSummary(DataType dataType) {
-        dataType.domainType == 'PrimitiveType' && ["bigint"].contains(dataType.label)
+        dataType.domainType == 'PrimitiveType' && ['bigint'].contains(dataType.label)
     }
 }
