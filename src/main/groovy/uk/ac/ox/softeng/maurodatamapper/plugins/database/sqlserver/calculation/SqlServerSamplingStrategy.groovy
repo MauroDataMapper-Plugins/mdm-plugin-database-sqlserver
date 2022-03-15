@@ -50,10 +50,10 @@ class SqlServerSamplingStrategy extends SamplingStrategy {
         BigDecimal percentage
         switch (type) {
             case Type.SUMMARY_METADATA:
-                percentage = smPercentage
+                percentage = getSummaryMetadataSamplePercentage()
                 break
             case Type.ENUMERATION_VALUES:
-                percentage = evPercentage
+                percentage = getEnumerationValueSamplePercentage()
                 break
         }
         this.useSamplingFor(type) ? " TABLESAMPLE (${percentage} PERCENT) REPEATABLE (${this.repeatSeed}) " : ''

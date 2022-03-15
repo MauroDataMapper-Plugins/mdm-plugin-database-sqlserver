@@ -126,3 +126,21 @@ grails {
 apply from: 'dependencies.gradle'
 apply from: "${projectDir}/gradle/additions/mdm.gradle"
 apply from: "${projectDir}/gradle/additions/staticCodeAnalysis.gradle"
+
+afterEvaluate{
+    def addtlJvmArgs = ['-XX:+UseG1GC', '-XX:+UseStringDeduplication', '-XX:+UseCompressedOops', '-Dfile.encoding=UTF-8',
+                        '-XX:ReservedCodeCacheSize=128M', '-XX:+UseCodeCacheFlushing']
+    // Make sure bootRun runs with the required arguments
+    tasks.withType(JavaExec).configureEach {
+        jvmArgs(addtlJvmArgs)
+        minHeapSize = '1g'
+        maxHeapSize = '8g'
+    }
+
+    tasks.withType(Test).configureEach {testTask ->
+        ignoreFailures = System.getenv().containsKey('JENKINS')
+        jvmArgs(addtlJvmArgs)
+        minHeapSize = '1g'
+        maxHeapSize = '8g'
+    }
+}

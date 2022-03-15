@@ -619,7 +619,7 @@ abstract class BaseDatabasePluginTest<P extends DatabaseDataModelImporterProvide
 
         if (validate) {
             log.info('Validating imported model')
-            if (importedModel.validate()) {
+            if (dataModelService.validate(importedModel)) {
                 log.info('Saving valid imported model')
                 saveDomain(importedModel)
             } else {

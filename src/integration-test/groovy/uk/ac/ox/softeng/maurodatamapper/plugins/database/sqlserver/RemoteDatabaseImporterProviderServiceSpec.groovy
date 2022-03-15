@@ -4,7 +4,6 @@ import uk.ac.ox.softeng.maurodatamapper.datamodel.DataModel
 import uk.ac.ox.softeng.maurodatamapper.datamodel.provider.exporter.DataModelJsonExporterService
 import uk.ac.ox.softeng.maurodatamapper.plugins.database.sqlserver.parameters.SqlServerDatabaseDataModelImporterProviderServiceParameters
 import uk.ac.ox.softeng.maurodatamapper.security.basic.UnloggedUser
-import uk.ac.ox.softeng.maurodatamapper.util.Utils
 
 import grails.gorm.transactions.Rollback
 import grails.testing.mixin.integration.Integration
@@ -12,8 +11,6 @@ import groovy.util.logging.Slf4j
 import spock.lang.Requires
 
 import java.nio.file.Files
-import java.nio.file.Path
-import java.nio.file.Paths
 
 /**
  * @since 08/03/2022
@@ -166,7 +163,7 @@ class RemoteDatabaseImporterProviderServiceSpec extends BaseDatabasePluginTest<
     }
 
 
-    void 'OUH04 : test Connection To Ouh for SM'() {
+    void 'OUH04 : test Connection To Ouh for SM only'() {
         given:
         setupData()
         SqlServerDatabaseDataModelImporterProviderServiceParameters params = new SqlServerDatabaseDataModelImporterProviderServiceParameters().tap {
@@ -186,8 +183,9 @@ class RemoteDatabaseImporterProviderServiceSpec extends BaseDatabasePluginTest<
             //            enumerationValueUseSampling = true
             //            enumerationValueSampleThreshold = 100000
             //            enumerationValueSamplePercent = 100
+            calculateSummaryMetadata = true
             summaryMetadataUseSampling = true
-            summaryMetadataSampleThreshold = 100000
+            summaryMetadataSampleThreshold = 2000000
             summaryMetadataSamplePercent = 10
             ignoreColumnsForSummaryMetadata = 'id,ID,.+_id,.+_identifier,pat,setgroup,request'
         }
@@ -206,7 +204,7 @@ class RemoteDatabaseImporterProviderServiceSpec extends BaseDatabasePluginTest<
         noExceptionThrown()
     }
 
-    void 'OUHXX : test Performance And Export As Json'() {
+    void 'OUH05 : test Connection To Ouh for SM and EV'() {
         given:
         setupData()
         SqlServerDatabaseDataModelImporterProviderServiceParameters params = new SqlServerDatabaseDataModelImporterProviderServiceParameters().tap {
@@ -223,31 +221,31 @@ class RemoteDatabaseImporterProviderServiceSpec extends BaseDatabasePluginTest<
             detectEnumerations = true
             maxEnumerations = 20
             ignoreColumnsForEnumerations = 'id,ID,.+_id,.+_identifier,pat,setgroup,request'
+            enumerationValueUseSampling = true
+            enumerationValueSampleThreshold = 2000000
+            enumerationValueSamplePercent = 50
             calculateSummaryMetadata = true
-            summaryMetadataSampleThreshold = 100000
+            summaryMetadataUseSampling = true
+            summaryMetadataSampleThreshold = 2000000
             summaryMetadataSamplePercent = 10
             ignoreColumnsForSummaryMetadata = 'id,ID,.+_id,.+_identifier,pat,setgroup,request'
         }
+
         when:
-        long startTime = System.currentTimeMillis()
         DataModel lims = importDataModelAndRetrieveFromDatabase(params)
-        log.info('Import complete in {}', Utils.timeTaken(startTime))
 
         then:
         lims
 
         when:
         ByteArrayOutputStream baos = dataModelJsonExporterService.exportDataModel(UnloggedUser.instance, lims)
-        Path p = Paths.get('build/export')
-        Files.createDirectories(p)
-        Path f = p.resolve('modules.json')
-        Files.write(f, baos.toByteArray())
+        Files.write(resourcesPath.resolve('lims.json'), baos.toByteArray())
 
         then:
-        true
+        noExceptionThrown()
     }
 
-    void 'OUHYY : test Connection To Ouh for enumeration detection'() {
+    void 'OUHYY : test complex Connection To Ouh'() {
         given:
         setupData()
         SqlServerDatabaseDataModelImporterProviderServiceParameters params = new SqlServerDatabaseDataModelImporterProviderServiceParameters().tap {
@@ -259,11 +257,11 @@ class RemoteDatabaseImporterProviderServiceSpec extends BaseDatabasePluginTest<
             databasePassword = System.getProperty('database.password')
             databaseNames = 'modules'
             schemaNames =
-//                'demographics,' +
-//                'diagnosis,' +
-//                'hospital_events,' +
-//                'icnarc,' +
-//                'icu,' +
+                'demographics,' +
+                'diagnosis,' +
+                'hospital_events,' +
+                'icnarc,' +
+                'icu,' +
                 'laboratory_tests,' +
                 'medical_scoring,' +
                 'medications,' +
@@ -279,11 +277,25 @@ class RemoteDatabaseImporterProviderServiceSpec extends BaseDatabasePluginTest<
             folderId = folder.getId()
             detectEnumerations = true
             maxEnumerations = 20
-            ignoreColumnsForEnumerations = 'id,ID,.+_id,.+_identifier,pat,setgroup,request,source,.+_details?,(mrn|nhs)_number'
-            ignoreTablesForImport = 'vw_.+'
+            ignoreTablesForImport = 'vw_.+,v_.+,' +
+                                    'grouped_alcohol_status,' +
+                                    'clinical_events_orbit,' +
+                                    'all_alcohol_status_observations,' +
+                                    'laboratory_tests_biochemistry_code_breakdown,' +
+                                    'laboratory_tests_biochemistry_name_breakdown,' +
+                                    'clinical_events_orbit_OLD'
+            detectEnumerations = true
+            maxEnumerations = 20
+            ignoreColumnsForEnumerations = 'id,ID,.+_id,.+_identifier,source,.+_details?,(mrn|nhs)_number'
             enumerationValueUseSampling = true
-            enumerationValueSampleThreshold = 20000000
-            enumerationValueSamplePercent = 1
+            enumerationValueSampleThreshold = 2000000
+            enumerationValueSamplePercent = 50
+            calculateSummaryMetadata = true
+            summaryMetadataUseSampling = true
+            summaryMetadataUseDynamicSamplePercent = true
+            summaryMetadataSampleThreshold = 2000000
+            summaryMetadataSamplePercent = 10
+            ignoreColumnsForSummaryMetadata = 'id,ID,.+_id,.+_identifier,source,.+_details?,(mrn|nhs)_number'
         }
 
         when:
@@ -291,11 +303,11 @@ class RemoteDatabaseImporterProviderServiceSpec extends BaseDatabasePluginTest<
 
         then:
         lims
-        lims.enumerationTypes.size() == 4
+        lims.enumerationTypes.size() > 1
 
         when:
         ByteArrayOutputStream baos = dataModelJsonExporterService.exportDataModel(UnloggedUser.instance, lims)
-        Files.write(resourcesPath.resolve('lims.json'), baos.toByteArray())
+        Files.write(resourcesPath.resolve('modules.json'), baos.toByteArray())
 
         then:
         noExceptionThrown()
