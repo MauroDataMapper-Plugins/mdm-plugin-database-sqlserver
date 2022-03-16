@@ -17,31 +17,10 @@
  */
 package uk.ac.ox.softeng.maurodatamapper.plugins.database.sqlserver
 
-import uk.ac.ox.softeng.maurodatamapper.profile.provider.JsonProfileProviderService
+class BootStrap {
 
-class SqlServerDatabaseProfileProviderService extends JsonProfileProviderService {
-    @Override
-    String getMetadataNamespace() {
-        namespace
+    def init = {servletContext ->
     }
-
-    @Override
-    String getVersion() {
-        getClass().getPackage().getSpecificationVersion() ?: 'SNAPSHOT'
-    }
-
-    @Override
-    String getDisplayName() {
-        'MS SQL Database'
-    }
-
-    @Override
-    String getJsonResourceFile() {
-        'SqlServerDatabaseProfile.json'
-    }
-
-    @Override
-    List<String> profileApplicableForDomains() {
-        return ['DataModel']
+    def destroy = {
     }
 }

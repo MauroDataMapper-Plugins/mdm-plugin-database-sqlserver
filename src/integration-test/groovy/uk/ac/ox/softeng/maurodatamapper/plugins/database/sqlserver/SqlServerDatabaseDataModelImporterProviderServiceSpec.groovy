@@ -17,22 +17,24 @@
  */
 package uk.ac.ox.softeng.maurodatamapper.plugins.database.sqlserver
 
-
 import uk.ac.ox.softeng.maurodatamapper.core.facet.Metadata
 import uk.ac.ox.softeng.maurodatamapper.datamodel.DataModel
 import uk.ac.ox.softeng.maurodatamapper.datamodel.item.DataClass
 import uk.ac.ox.softeng.maurodatamapper.datamodel.item.DataElement
 import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.EnumerationType
 import uk.ac.ox.softeng.maurodatamapper.datamodel.provider.exporter.DataModelJsonExporterService
-import uk.ac.ox.softeng.maurodatamapper.plugins.testing.utils.BaseDatabasePluginTest
+import uk.ac.ox.softeng.maurodatamapper.plugins.database.sqlserver.parameters.SqlServerDatabaseDataModelImporterProviderServiceParameters
 import uk.ac.ox.softeng.maurodatamapper.security.basic.UnloggedUser
 import uk.ac.ox.softeng.maurodatamapper.util.Utils
 
+import grails.gorm.transactions.Rollback
+import grails.testing.mixin.integration.Integration
 import groovy.json.JsonSlurper
 import groovy.util.logging.Slf4j
-import org.junit.Ignore
-import org.junit.Test
+import spock.lang.Ignore
+import spock.lang.Requires
 
+import java.nio.charset.Charset
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -44,18 +46,16 @@ import static org.junit.Assert.assertTrue
 
 // @CompileStatic
 @Slf4j
-class SqlServerDatabaseDataModelImporterProviderServiceTest
-    extends BaseDatabasePluginTest<SqlServerDatabaseDataModelImporterProviderServiceParameters, SqlServerDatabaseDataModelImporterProviderService> {
+@Integration
+@Rollback
+class SqlServerDatabaseDataModelImporterProviderServiceSpec
+    extends BaseDatabasePluginTest<
+        SqlServerDatabaseDataModelImporterProviderServiceParameters,
+        SqlServerDatabaseDataModelImporterProviderService> {
 
-    @Override
-    String getDatabasePortPropertyName() {
-        'unknown'
-    }
 
-    @Override
-    int getDefaultDatabasePort() {
-        1433
-    }
+    SqlServerDatabaseDataModelImporterProviderService sqlServerDatabaseDataModelImporterProviderService
+    DataModelJsonExporterService dataModelJsonExporterService
 
     @Override
     SqlServerDatabaseDataModelImporterProviderServiceParameters createDatabaseImportParameters() {
@@ -68,69 +68,30 @@ class SqlServerDatabaseDataModelImporterProviderServiceTest
         }
     }
 
-    @Test
-    @Ignore('no credentials')
-    void testConnectionToOuh() {
-        SqlServerDatabaseDataModelImporterProviderServiceParameters params = new SqlServerDatabaseDataModelImporterProviderServiceParameters().tap {
-            databaseHost = 'oxnetdwp01.oxnet.nhs.uk'
-            domain = 'OXNET'
-            authenticationScheme = 'ntlm'
-            integratedSecurity = true
-            databaseUsername = ''
-            databasePassword = ''
-            databaseNames = 'LIMS'
-            schemaNames = 'raw'
-            databaseSSL = false
-            folderId = getTestFolder().getId()
-        }
-
-        DataModel lims = importDataModelAndRetrieveFromDatabase(params)
-
-        assert lims
+    @Override
+    String getDatabasePortPropertyName() {
+        'unknown'
     }
 
-    @Test
-    //    @Ignore('no credentials')
-    void testPerformanceAndExportAsJson() {
-
-        DataModelJsonExporterService jsonExporterService = getBean(DataModelJsonExporterService)
-        assert jsonExporterService
-
-        SqlServerDatabaseDataModelImporterProviderServiceParameters params = new SqlServerDatabaseDataModelImporterProviderServiceParameters().tap {
-            databaseHost = 'oxnetdwp01.oxnet.nhs.uk'
-            domain = 'OXNET'
-            authenticationScheme = 'ntlm'
-            integratedSecurity = true
-            databaseUsername = ''
-            databasePassword = ''
-            databaseNames = 'LIMS'
-            schemaNames = 'raw'
-            databaseSSL = false
-            folderId = getTestFolder().getId()
-            detectEnumerations = true
-            maxEnumerations = 20
-            calculateSummaryMetadata = true
-            sampleThreshold = 100000
-            samplePercent = 10
-        }
-        long startTime = System.currentTimeMillis()
-        DataModel lims = importDataModelAndRetrieveFromDatabase(params)
-        log.info('Import complete in {}', Utils.timeTaken(startTime))
-
-        assert lims
-
-        ByteArrayOutputStream baos = jsonExporterService.exportDataModel(UnloggedUser.instance, lims)
-        Path p = Paths.get('build/export')
-        Files.createDirectories(p)
-        Path f = p.resolve('modules.json')
-        Files.write(f, baos.toByteArray())
+    @Override
+    int getDefaultDatabasePort() {
+        1433
     }
 
-    @Test
-    void testImportSimpleDatabase() {
+    @Override
+    SqlServerDatabaseDataModelImporterProviderService getImporterInstance() {
+        sqlServerDatabaseDataModelImporterProviderService
+    }
+
+    void 'test Import Simple Database'() {
+        given:
+        setupData()
+
+        when:
         final DataModel dataModel = importDataModelAndRetrieveFromDatabase(
             createDatabaseImportParameters(databaseHost, databasePort).tap {databaseNames = 'metadata_simple'})
 
+        then:
         checkBasic(dataModel)
         checkOrganisationNotEnumerated(dataModel)
         checkSampleNoSummaryMetadata(dataModel)
@@ -157,9 +118,11 @@ class SqlServerDatabaseDataModelImporterProviderServiceTest
          * So 16 primitive types, plus two reference types for catalogue_itemType and catalogue_userType
          */
 
+        when:
         List<String> defaultDataTypeLabels = importerInstance.defaultDataTypeProvider.defaultListOfDataTypes.collect {it.label}
-        assertEquals 'Default DT Provider', 40, defaultDataTypeLabels.size()
 
+        then:
+        assertEquals 'Default DT Provider', 40, defaultDataTypeLabels.size()
         assertEquals 'Number of columntypes/datatypes', 42, dataModel.dataTypes?.size()
         assertTrue 'All primitive DTs map to a default DT', dataModel.primitiveTypes.findAll {!(it.label in defaultDataTypeLabels)}.isEmpty()
         assertEquals 'Number of primitive types', 40, dataModel.dataTypes.findAll {it.domainType == 'PrimitiveType'}.size()
@@ -168,23 +131,29 @@ class SqlServerDatabaseDataModelImporterProviderServiceTest
         assertEquals 'Number of char datatypes', 1, dataModel.dataTypes.findAll {it.domainType == 'PrimitiveType' && it.label == 'char'}.size()
     }
 
-    @Test
-    void testImportSimpleDatabaseWithEnumerations() {
-        final DataModel dataModel = importDataModelAndRetrieveFromDatabase(
-                createDatabaseImportParameters(databaseHost, databasePort).tap {
-                    databaseNames = 'metadata_simple'
-                    detectEnumerations = true
-                    maxEnumerations = 20})
+    void 'EV : test Import Simple Database With Enumerations'() {
+        given:
+        setupData()
 
+        when:
+        final DataModel dataModel = importDataModelAndRetrieveFromDatabase(
+            createDatabaseImportParameters(databaseHost, databasePort).tap {
+                databaseNames = 'metadata_simple'
+                detectEnumerations = true
+                maxEnumerations = 20
+            })
+
+        then:
         checkBasic(dataModel)
         checkOrganisationEnumerated(dataModel)
         checkSampleNoSummaryMetadata(dataModel)
         checkBiggerSampleNoSummaryMetadata(dataModel)
 
+        when:
         List<String> defaultDataTypeLabels = importerInstance.defaultDataTypeProvider.defaultListOfDataTypes.collect {it.label}
+
+        then:
         assertEquals 'Default DT Provider', 40, defaultDataTypeLabels.size()
-
-
         assertEquals 'Number of columntypes/datatypes', 48, dataModel.dataTypes?.size()
         assertTrue 'All primitive DTs map to a default DT', dataModel.primitiveTypes.findAll {!(it.label in defaultDataTypeLabels)}.isEmpty()
         assertEquals 'Number of primitive types', 40, dataModel.dataTypes.findAll {it.domainType == 'PrimitiveType'}.size()
@@ -195,16 +164,24 @@ class SqlServerDatabaseDataModelImporterProviderServiceTest
 
     }
 
-    @Test
-    void 'testImportSimpleDatabaseWithSummaryMetadata'() {
-        final DataModel dataModel = importDataModelAndRetrieveFromDatabase(
-                createDatabaseImportParameters(databaseHost, databasePort).tap {
-                    databaseNames = 'metadata_simple'
-                    detectEnumerations = true
-                    maxEnumerations = 20
-                    calculateSummaryMetadata = true
-                })
+    void 'SM01 : test Import Simple Database With Summary Metadata'() {
+        given:
+        setupData()
 
+        when:
+        final DataModel dataModel = importDataModelAndRetrieveFromDatabase(
+            createDatabaseImportParameters(databaseHost, databasePort).tap {
+                databaseNames = 'metadata_simple'
+                detectEnumerations = true
+                maxEnumerations = 20
+                calculateSummaryMetadata = true
+                summaryMetadataUseSampling = false
+                enumerationValueUseSampling = false
+                ignoreColumnsForSummaryMetadata = '.*id'
+                ignoreColumnsForEnumerations = '.*id'
+            })
+
+        then:
         checkBasic(dataModel)
         checkOrganisationEnumerated(dataModel)
         checkOrganisationSummaryMetadata(dataModel)
@@ -212,41 +189,65 @@ class SqlServerDatabaseDataModelImporterProviderServiceTest
         checkBiggerSampleSummaryMetadata(dataModel)
     }
 
-    @Test
-    void 'testImportSimpleDatabaseWithSummaryMetadataWithSampling'() {
-        final DataModel dataModel = importDataModelAndRetrieveFromDatabase(
-                createDatabaseImportParameters(databaseHost, databasePort).tap {
-                    databaseNames = 'metadata_simple'
-                    detectEnumerations = true
-                    maxEnumerations = 20
-                    calculateSummaryMetadata = true
-                    sampleThreshold = 1000
-                    samplePercent = 10
-                })
+    void 'SM02 : test Import Simple Database With Summary Metadata With Sampling'() {
+        given:
+        setupData()
 
+        when:
+        final DataModel dataModel = importDataModelAndRetrieveFromDatabase(
+            createDatabaseImportParameters(databaseHost, databasePort).tap {
+                databaseNames = 'metadata_simple'
+                detectEnumerations = true
+                maxEnumerations = 20
+                calculateSummaryMetadata = true
+                summaryMetadataUseSampling = true
+                summaryMetadataSampleThreshold = 1000
+                summaryMetadataSamplePercent = 10
+                enumerationValueUseSampling = true
+                enumerationValueSampleThreshold = 1000
+                enumerationValueSamplePercent = 10
+                ignoreColumnsForSummaryMetadata = '.*id'
+                ignoreColumnsForEnumerations = '.*id'
+            })
+
+        then:
         checkBasic(dataModel)
         checkOrganisationEnumerated(dataModel)
         checkSampleSummaryMetadata(dataModel)
 
+        when:
         final DataClass publicSchema = dataModel.childDataClasses.first()
+
+        then:
         assertEquals 'Number of child tables/dataclasses', 7, publicSchema.dataClasses?.size()
 
+        when:
         final Set<DataClass> dataClasses = publicSchema.dataClasses
         final DataClass sampleTable = dataClasses.find {it.label == 'bigger_sample'}
 
+        then:
         assertEquals 'Sample Number of columns/dataElements', 4, sampleTable.dataElements.size()
 
+        when:
         final DataElement sample_bigint = sampleTable.dataElements.find{it.label == "sample_bigint"}
+
+        then:
         assertEquals 'description of summary metadata for sample_bigint',
                 'Estimated Value Distribution (calculated by sampling 10% of rows)',
                 sample_bigint.summaryMetadata[0].description
 
+        when:
         final DataElement sample_decimal = sampleTable.dataElements.find{it.label == "sample_decimal"}
+
+        then:
         assertEquals 'description of summary metadata for sample_decimal',
                 'Estimated Value Distribution (calculated by sampling 10% of rows)',
                 sample_decimal.summaryMetadata[0].description
 
+        when:
         final DataElement sample_date = sampleTable.dataElements.find{it.label == "sample_date"}
+
+        then:
         assertEquals 'description of summary metadata for sample_date',
                 'Estimated Value Distribution (calculated by sampling 10% of rows)',
                 sample_date.summaryMetadata[0].description
@@ -255,14 +256,123 @@ class SqlServerDatabaseDataModelImporterProviderServiceTest
          * Enumeration type determined using a sample, so we can't be certain that there will be exactly 15 results.
          * But there should be between 1 and 15 values, and any values must be in our expected list.
          */
+        when:
         final EnumerationType sampleVarcharEnumerationType = sampleTable.findDataElement('sample_varchar').dataType
+
+        then:
         assertTrue 'One or more 0 enumeration values', sampleVarcharEnumerationType.enumerationValues.size() >= 1
         assertTrue '15 or fewer enumeration values', sampleVarcharEnumerationType.enumerationValues.size() <= 15
         sampleVarcharEnumerationType.enumerationValues.each {
             assertTrue 'Enumeration key in expected set',
                     ['ENUM0', 'ENUM1', 'ENUM2', 'ENUM3', 'ENUM4', 'ENUM5', 'ENUM6', 'ENUM7', 'ENUM8', 'ENUM9', 'ENUM10', 'ENUM11', 'ENUM12', 'ENUM13', 'ENUM14'].contains(it.key)
         }
+    }
 
+    void 'SM03 : test Import Simple Database With Summary Metadata With Sampling disabled but threshold set'() {
+        given:
+        setupData()
+
+        when:
+        final DataModel dataModel = importDataModelAndRetrieveFromDatabase(
+            createDatabaseImportParameters(databaseHost, databasePort).tap {
+                databaseNames = 'metadata_simple'
+                detectEnumerations = true
+                maxEnumerations = 20
+                calculateSummaryMetadata = true
+                summaryMetadataUseSampling = false
+                summaryMetadataSampleThreshold = 1000
+                summaryMetadataSamplePercent = 10
+                enumerationValueUseSampling = true
+                enumerationValueSampleThreshold = 1000
+                enumerationValueSamplePercent = 10
+                ignoreColumnsForSummaryMetadata = '.*id'
+                ignoreColumnsForEnumerations = '.*id'
+            })
+
+        then:
+        checkBasic(dataModel)
+        checkOrganisationEnumerated(dataModel)
+        checkSampleSummaryMetadata(dataModel)
+
+        when:
+        final DataClass publicSchema = dataModel.childDataClasses.first()
+
+        then:
+        assertEquals 'Number of child tables/dataclasses', 7, publicSchema.dataClasses?.size()
+
+        // All of the following had row count > threshold so we would sample but sampling has been disabled
+        when:
+        final Set<DataClass> dataClasses = publicSchema.dataClasses
+        final DataClass sampleTable = dataClasses.find {it.label == 'bigger_sample'}
+
+        then:
+        assertEquals 'Sample Number of columns/dataElements', 4, sampleTable.dataElements.size()
+
+        when:
+        final DataElement sample_bigint = sampleTable.dataElements.find{it.label == "sample_bigint"}
+
+        then:
+        assertEquals 'Zero summaryMetadata for sample_big_int', 0, sample_bigint.summaryMetadata.size()
+
+        when:
+        final DataElement sample_decimal = sampleTable.dataElements.find{it.label == "sample_decimal"}
+
+        then:
+        assertEquals 'Zero summaryMetadata for sample_decimal', 0, sample_bigint.summaryMetadata.size()
+
+        when:
+        final DataElement sample_date = sampleTable.dataElements.find{it.label == "sample_date"}
+
+        then:
+        assertEquals 'Zero summaryMetadata for sample_date', 0, sample_bigint.summaryMetadata.size()
+
+        /**
+         * Enumeration type determined using a sample, so we can't be certain that there will be exactly 15 results.
+         * But there should be between 1 and 15 values, and any values must be in our expected list.
+         */
+        when:
+        final EnumerationType sampleVarcharEnumerationType = sampleTable.findDataElement('sample_varchar').dataType
+
+        then:
+        assertTrue 'One or more 0 enumeration values', sampleVarcharEnumerationType.enumerationValues.size() >= 1
+        assertTrue '15 or fewer enumeration values', sampleVarcharEnumerationType.enumerationValues.size() <= 15
+        sampleVarcharEnumerationType.enumerationValues.each {
+            assertTrue 'Enumeration key in expected set',
+                       ['ENUM0', 'ENUM1', 'ENUM2', 'ENUM3', 'ENUM4', 'ENUM5', 'ENUM6', 'ENUM7', 'ENUM8', 'ENUM9', 'ENUM10', 'ENUM11', 'ENUM12', 'ENUM13', 'ENUM14'].contains(it.key)
+        }
+    }
+
+    @Ignore('The json is depedent on exporting system')
+    void 'SM04 : test Import Simple Database With Summary Metadata and export to json'() {
+        given:
+        setupData()
+
+        when:
+        final DataModel dataModel = importDataModelAndRetrieveFromDatabase(
+            createDatabaseImportParameters(databaseHost, databasePort).tap {
+                databaseNames = 'metadata_simple'
+                detectEnumerations = true
+                maxEnumerations = 20
+                calculateSummaryMetadata = true
+                summaryMetadataUseSampling = false
+                enumerationValueUseSampling = false
+                ignoreColumnsForSummaryMetadata = '.*id'
+                ignoreColumnsForEnumerations = '.*id'
+            })
+
+        then:
+        checkBasic(dataModel)
+        checkOrganisationEnumerated(dataModel)
+        checkOrganisationSummaryMetadata(dataModel)
+        checkSampleSummaryMetadata(dataModel)
+        checkBiggerSampleSummaryMetadata(dataModel)
+
+        when:
+        ByteArrayOutputStream baos = dataModelJsonExporterService.exportDataModel(UnloggedUser.instance, dataModel)
+        String exportedModel = new String(baos.toByteArray(), Charset.defaultCharset())
+
+        then:
+        validateExportedModel('simpleSummaryMetadata', exportedModel)
     }
 
     private void checkBasic(DataModel dataModel) {
@@ -526,16 +636,13 @@ class SqlServerDatabaseDataModelImporterProviderServiceTest
 
         assertEquals 'Sample Number of columns/dataElements', expectedColumns.size(), sampleTable.dataElements.size()
 
-        expectedColumns.each {columnName ->
+        DataElement deId = sampleTable.dataElements.find{it.label == 'id'}
+        assertEquals 'Zero summaryMetadata', 0, deId.summaryMetadata.size()
+
+        expectedColumns.findAll {it != 'id'}.each {columnName ->
             DataElement de = sampleTable.dataElements.find{it.label == columnName}
             assertEquals 'One summaryMetadata', 1, de.summaryMetadata.size()
         }
-
-        final DataElement id = sampleTable.dataElements.find{it.label == "id"}
-        //Expect id to have contiguous values from 1 to 201
-        assertEquals 'reportValue for id',
-                '{"0 - 20":19,"20 - 40":20,"40 - 60":20,"60 - 80":20,"80 - 100":20,"100 - 120":20,"120 - 140":20,"140 - 160":20,"160 - 180":20,"180 - 200":20,"200 - 220":2}',
-                id.summaryMetadata[0].summaryMetadataReports[0].reportValue
 
         //sample_tinyint
         final DataElement sample_tinyint = sampleTable.dataElements.find{it.label == "sample_tinyint"}
@@ -564,13 +671,13 @@ class SqlServerDatabaseDataModelImporterProviderServiceTest
         //sample_decimal
         final DataElement sample_decimal = sampleTable.dataElements.find{it.label == "sample_decimal"}
         assertEquals 'reportValue for sample_decimal',
-                '{"0.000 - 1000000.000":83,"1000000.000 - 2000000.000":36,"2000000.000 - 3000000.000":26,"3000000.000 - 4000000.000":22,"4000000.000 - 5000000.000":20,"5000000.000 - 6000000.000":14}',
+                '{"0.00 - 1000000.00":83,"1000000.00 - 2000000.00":36,"2000000.00 - 3000000.00":26,"3000000.00 - 4000000.00":22,"4000000.00 - 5000000.00":20,"5000000.00 - 6000000.00":14}',
                 sample_decimal.summaryMetadata[0].summaryMetadataReports[0].reportValue
 
         //sample_numeric
         final DataElement sample_numeric = sampleTable.dataElements.find{it.label == "sample_numeric"}
         assertEquals 'reportValue for sample_numeric',
-                '{"-10.000000 - -5.000000":20,"-5.000000 - 0.000000":80,"0.000000 - 5.000000":81,"5.000000 - 10.000000":20}',
+                '{"-10.00 - -8.00":6,"-8.00 - -6.00":9,"-6.00 - -4.00":11,"-4.00 - -2.00":15,"-2.00 - 0.00":59,"0.00 - 2.00":60,"2.00 - 4.00":15,"4.00 - 6.00":11,"6.00 - 8.00":9,"8.00 - 10.00":6}',
                 sample_numeric.summaryMetadata[0].summaryMetadataReports[0].reportValue
 
         //sample_date
@@ -582,7 +689,7 @@ class SqlServerDatabaseDataModelImporterProviderServiceTest
         //sample_smalldatetime
         final DataElement sample_smalldatetime = sampleTable.dataElements.find{it.label == "sample_smalldatetime"}
         assertEquals 'reportValue for sample_smalldatetime',
-                '{"2012":8,"2013":12,"2014":12,"2015":12,"2016":12,"2017":12,"2018":12,"2019":12,"2020":12,"2021":12,"2022":12,"2023":12,"2024":12,"2025":12,"2026":12,"2027":12,"2028":12,"2029":1}',
+                '{"2012 - 2014":20,"2014 - 2016":24,"2016 - 2018":24,"2018 - 2020":24,"2020 - 2022":24,"2022 - 2024":24,"2024 - 2026":24,"2026 - 2028":24,"2028 - 2030":13}',
                 sample_smalldatetime.summaryMetadata[0].summaryMetadataReports[0].reportValue
 
         //sample_datetime
@@ -594,7 +701,7 @@ class SqlServerDatabaseDataModelImporterProviderServiceTest
         //sample_datetime2
         final DataElement sample_datetime2 = sampleTable.dataElements.find{it.label == "sample_datetime2"}
         assertEquals 'reportValue for sample_datetime2',
-                '{"27/08/2020 - 28/08/2020":4,"28/08/2020 - 29/08/2020":24,"29/08/2020 - 30/08/2020":24,"30/08/2020 - 31/08/2020":24,"31/08/2020 - 01/09/2020":24,"01/09/2020 - 02/09/2020":24,"02/09/2020 - 03/09/2020":24,"03/09/2020 - 04/09/2020":24,"04/09/2020 - 05/09/2020":24,"05/09/2020 - 06/09/2020":5}',
+                '{"27/08/2020":4,"28/08/2020":24,"29/08/2020":24,"30/08/2020":24,"31/08/2020":24,"01/09/2020":24,"02/09/2020":24,"03/09/2020":24,"04/09/2020":24,"05/09/2020":5}',
                 sample_datetime2.summaryMetadata[0].summaryMetadataReports[0].reportValue
 
     }
@@ -638,9 +745,9 @@ class SqlServerDatabaseDataModelImporterProviderServiceTest
 
         //Map of column name to expected summary metadata description:reportValue. Expect exact counts.
         Map<String, Map<String, String>> expectedColumns = [
-                "sample_bigint": ['Value Distribution':'{"0 - 100000":99999,"100000 - 200000":100000,"200000 - 300000":100000,"300000 - 400000":100000,"400000 - 500000":100000,"500000 - 600000":1}'],
-                "sample_decimal": ['Value Distribution':'{"-1.000 - 0.000":249924,"0.000 - 1.000":245051,"1.000 - 2.000":5025}'],
-                "sample_date": ['Value Distribution':'{"Feb 2020 - Apr 2020":108893,"Apr 2020 - Jun 2020":63245,"Jun 2020 - Aug 2020":51465,"Aug 2020 - Oct 2020":49551,"Oct 2020 - Dec 2020":51145,"Dec 2020 - Feb 2021":63103,"Feb 2021 - Apr 2021":112598}'],
+                "sample_bigint": ['Value Distribution':'{"0 - 50000":49999,"50000 - 100000":50000,"100000 - 150000":50000,"150000 - 200000":50000,"200000 - 250000":50000,"250000 - 300000":50000,"300000 - 350000":50000,"350000 - 400000":50000,"400000 - 450000":50000,"450000 - 500000":50000,"500000 - 550000":1}'],
+                "sample_decimal": ['Value Distribution':'{"-1.00 - -0.80":102272,"-0.80 - -0.60":45195,"-0.60 - -0.40":36947,"-0.40 - -0.20":33440,"-0.20 - 0.00":32070,"0.00 - 0.20":32052,"0.20 - 0.40":33429,"0.40 - 0.60":36919,"0.60 - 0.80":45138,"0.80 - 1.00":97513,"1.00 - 1.20":5025}'],
+                "sample_date": ['Value Distribution':'{"Jan 2020 - Mar 2020":59901,"Mar 2020 - May 2020":82660,"May 2020 - Jul 2020":55581,"Jul 2020 - Sept 2020":50276,"Sept 2020 - Nov 2020":50071,"Nov 2020 - Jan 2021":54919,"Jan 2021 - Mar 2021":74811,"Mar 2021 - May 2021":71781}'],
                 "sample_varchar": ['Enumeration Value Distribution':'{"ENUM0":33333,"ENUM1":33334,"ENUM10":33333,"ENUM11":33333,"ENUM12":33333,"ENUM13":33333,"ENUM14":33333,"ENUM2":33334,"ENUM3":33334,"ENUM4":33334,"ENUM5":33334,"ENUM6":33333,"ENUM7":33333,"ENUM8":33333,"ENUM9":33333}']
         ]
 
