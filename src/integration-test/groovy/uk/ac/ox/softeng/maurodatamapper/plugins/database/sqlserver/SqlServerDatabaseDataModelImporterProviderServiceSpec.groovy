@@ -670,13 +670,13 @@ class SqlServerDatabaseDataModelImporterProviderServiceSpec
         //sample_decimal
         final DataElement sample_decimal = sampleTable.dataElements.find{it.label == "sample_decimal"}
         assertEquals 'reportValue for sample_decimal',
-                '{"0.000 - 1000000.000":83,"1000000.000 - 2000000.000":36,"2000000.000 - 3000000.000":26,"3000000.000 - 4000000.000":22,"4000000.000 - 5000000.000":20,"5000000.000 - 6000000.000":14}',
+                '{"0.00 - 1000000.00":83,"1000000.00 - 2000000.00":36,"2000000.00 - 3000000.00":26,"3000000.00 - 4000000.00":22,"4000000.00 - 5000000.00":20,"5000000.00 - 6000000.00":14}',
                 sample_decimal.summaryMetadata[0].summaryMetadataReports[0].reportValue
 
         //sample_numeric
         final DataElement sample_numeric = sampleTable.dataElements.find{it.label == "sample_numeric"}
         assertEquals 'reportValue for sample_numeric',
-                '{"-10.000000 - -5.000000":20,"-5.000000 - 0.000000":80,"0.000000 - 5.000000":81,"5.000000 - 10.000000":20}',
+                '{"-10.00 - -8.00":6,"-8.00 - -6.00":9,"-6.00 - -4.00":11,"-4.00 - -2.00":15,"-2.00 - 0.00":59,"0.00 - 2.00":60,"2.00 - 4.00":15,"4.00 - 6.00":11,"6.00 - 8.00":9,"8.00 - 10.00":6}',
                 sample_numeric.summaryMetadata[0].summaryMetadataReports[0].reportValue
 
         //sample_date
@@ -688,7 +688,7 @@ class SqlServerDatabaseDataModelImporterProviderServiceSpec
         //sample_smalldatetime
         final DataElement sample_smalldatetime = sampleTable.dataElements.find{it.label == "sample_smalldatetime"}
         assertEquals 'reportValue for sample_smalldatetime',
-                '{"2012":8,"2013":12,"2014":12,"2015":12,"2016":12,"2017":12,"2018":12,"2019":12,"2020":12,"2021":12,"2022":12,"2023":12,"2024":12,"2025":12,"2026":12,"2027":12,"2028":12,"2029":1}',
+                '{"2012 - 2014":20,"2014 - 2016":24,"2016 - 2018":24,"2018 - 2020":24,"2020 - 2022":24,"2022 - 2024":24,"2024 - 2026":24,"2026 - 2028":24,"2028 - 2030":13}',
                 sample_smalldatetime.summaryMetadata[0].summaryMetadataReports[0].reportValue
 
         //sample_datetime
@@ -700,7 +700,7 @@ class SqlServerDatabaseDataModelImporterProviderServiceSpec
         //sample_datetime2
         final DataElement sample_datetime2 = sampleTable.dataElements.find{it.label == "sample_datetime2"}
         assertEquals 'reportValue for sample_datetime2',
-                '{"27/08/2020 - 28/08/2020":4,"28/08/2020 - 29/08/2020":24,"29/08/2020 - 30/08/2020":24,"30/08/2020 - 31/08/2020":24,"31/08/2020 - 01/09/2020":24,"01/09/2020 - 02/09/2020":24,"02/09/2020 - 03/09/2020":24,"03/09/2020 - 04/09/2020":24,"04/09/2020 - 05/09/2020":24,"05/09/2020 - 06/09/2020":5}',
+                '{"27/08/2020":4,"28/08/2020":24,"29/08/2020":24,"30/08/2020":24,"31/08/2020":24,"01/09/2020":24,"02/09/2020":24,"03/09/2020":24,"04/09/2020":24,"05/09/2020":5}',
                 sample_datetime2.summaryMetadata[0].summaryMetadataReports[0].reportValue
 
     }
@@ -744,9 +744,9 @@ class SqlServerDatabaseDataModelImporterProviderServiceSpec
 
         //Map of column name to expected summary metadata description:reportValue. Expect exact counts.
         Map<String, Map<String, String>> expectedColumns = [
-                "sample_bigint": ['Value Distribution':'{"0 - 100000":99999,"100000 - 200000":100000,"200000 - 300000":100000,"300000 - 400000":100000,"400000 - 500000":100000,"500000 - 600000":1}'],
-                "sample_decimal": ['Value Distribution':'{"-1.000 - 0.000":249924,"0.000 - 1.000":245051,"1.000 - 2.000":5025}'],
-                "sample_date": ['Value Distribution':'{"Feb 2020 - Apr 2020":108893,"Apr 2020 - Jun 2020":63245,"Jun 2020 - Aug 2020":51465,"Aug 2020 - Oct 2020":49551,"Oct 2020 - Dec 2020":51145,"Dec 2020 - Feb 2021":63103,"Feb 2021 - Apr 2021":112598}'],
+                "sample_bigint": ['Value Distribution':'{"0 - 50000":49999,"50000 - 100000":50000,"100000 - 150000":50000,"150000 - 200000":50000,"200000 - 250000":50000,"250000 - 300000":50000,"300000 - 350000":50000,"350000 - 400000":50000,"400000 - 450000":50000,"450000 - 500000":50000,"500000 - 550000":1}'],
+                "sample_decimal": ['Value Distribution':'{"-1.00 - -0.80":102272,"-0.80 - -0.60":45195,"-0.60 - -0.40":36947,"-0.40 - -0.20":33440,"-0.20 - 0.00":32070,"0.00 - 0.20":32052,"0.20 - 0.40":33429,"0.40 - 0.60":36919,"0.60 - 0.80":45138,"0.80 - 1.00":97513,"1.00 - 1.20":5025}'],
+                "sample_date": ['Value Distribution':'{"Jan 2020 - Mar 2020":59901,"Mar 2020 - May 2020":82660,"May 2020 - Jul 2020":55581,"Jul 2020 - Sept 2020":50276,"Sept 2020 - Nov 2020":50071,"Nov 2020 - Jan 2021":54919,"Jan 2021 - Mar 2021":74811,"Mar 2021 - May 2021":71781}'],
                 "sample_varchar": ['Enumeration Value Distribution':'{"ENUM0":33333,"ENUM1":33334,"ENUM10":33333,"ENUM11":33333,"ENUM12":33333,"ENUM13":33333,"ENUM14":33333,"ENUM2":33334,"ENUM3":33334,"ENUM4":33334,"ENUM5":33334,"ENUM6":33333,"ENUM7":33333,"ENUM8":33333,"ENUM9":33333}']
         ]
 

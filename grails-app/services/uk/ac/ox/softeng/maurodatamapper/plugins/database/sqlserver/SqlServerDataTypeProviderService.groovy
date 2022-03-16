@@ -106,7 +106,7 @@ More info: [Microsoft T-SQL documentation](https://docs.microsoft.com/en-us/sql/
             [
                 label      : 'decimal',
                 description: '''Fixed precision and scale numbers.
-Data range is from -10^38 +1 to 10^38 -1, depending on the precision and scale numbers.         
+Data range is from -10^38 +1 to 10^38 -1, depending on the precision and scale numbers.
 
 More Info: [Microsoft T-SQL Documentation](https://docs.microsoft.com/en-us/sql/t-sql/data-types/numeric-types)'''
             ],
@@ -123,7 +123,7 @@ More Info: [Microsoft T-SQL Documentation](https://docs.microsoft.com/en-us/sql/
 The n parameter indicates whether the field should hold 4 or 8 bytes.
 float[24] holds a 4-byte field and float[53] holds an 8-byte field.
 Default value of n is 53.
-            
+
 More Info: [Microsoft T-SQL documentation](https://docs.microsoft.com/en-us/sql/t-sql/data-types/float-and-real-transact-sql)'''
             ],
             [
