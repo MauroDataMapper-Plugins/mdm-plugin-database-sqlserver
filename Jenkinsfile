@@ -63,7 +63,7 @@ pipeline {
                         allowMissing         : true,
                         alwaysLinkToLastBuild: true,
                         keepAll              : true,
-                        reportDir            : 'build/reports/tests/integrationTest',
+                        reportDir            : 'build/reports/tests',
                         reportFiles          : 'index.html',
                         reportName           : 'Integration Test Report',
                         reportTitles         : 'Test'
