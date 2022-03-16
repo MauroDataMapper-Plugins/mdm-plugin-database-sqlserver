@@ -342,6 +342,7 @@ class SqlServerDatabaseDataModelImporterProviderServiceSpec
         }
     }
 
+    @Ignore('The json is depedent on exporting system')
     void 'SM04 : test Import Simple Database With Summary Metadata and export to json'() {
         given:
         setupData()
