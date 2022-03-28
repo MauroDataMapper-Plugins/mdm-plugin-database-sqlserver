@@ -135,6 +135,20 @@ GROUP BY ${escapeIdentifier(columnName)}""".stripIndent()
         rangeDistributionQueryString(samplingStrategy, selects, columnName, tableName, schemaName)
     }
 
+    @Override
+    String enumerationValueDistributionQueryString(SamplingStrategy samplingStrategy,
+                                                   String columnName,
+                                                   String tableName,
+                                                   String schemaName) {
+
+        """SELECT 
+  ${escapeIdentifier(schemaName)}.${escapeIdentifier(tableName)}.${escapeIdentifier(columnName)} AS enumeration_value,
+  ${samplingStrategy.scaleFactor()} * COUNT_BIG(*) AS enumeration_count
+FROM ${escapeIdentifier(schemaName)}.${escapeIdentifier(tableName)} ${samplingStrategy.samplingClause(SamplingStrategy.Type.SUMMARY_METADATA)}
+GROUP BY ${escapeIdentifier(schemaName)}.${escapeIdentifier(tableName)}.${escapeIdentifier(columnName)}
+ORDER BY ${escapeIdentifier(schemaName)}.${escapeIdentifier(tableName)}.${escapeIdentifier(columnName)}""".stripIndent()
+    }
+
     /**
      * Returns a String that looks, for example, like this:
      * WITH #interval AS (
