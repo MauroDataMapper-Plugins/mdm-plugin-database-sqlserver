@@ -37,7 +37,7 @@ class SqlServerSamplingStrategy extends SamplingStrategy {
      * SQL Server can only use TABLESAMPLE on tables
      * @return
      */
-    boolean canSampleTypeType() {
+    boolean canSampleTableType() {
         this.tableType == 'BASE TABLE'
     }
 
