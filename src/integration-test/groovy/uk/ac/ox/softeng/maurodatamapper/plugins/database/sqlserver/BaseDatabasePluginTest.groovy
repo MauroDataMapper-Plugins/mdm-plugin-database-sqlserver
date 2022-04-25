@@ -26,9 +26,6 @@ import uk.ac.ox.softeng.maurodatamapper.datamodel.DataModel
 import uk.ac.ox.softeng.maurodatamapper.datamodel.DataModelService
 import uk.ac.ox.softeng.maurodatamapper.plugins.database.AbstractDatabaseDataModelImporterProviderService
 import uk.ac.ox.softeng.maurodatamapper.plugins.database.DatabaseDataModelImporterProviderServiceParameters
-import uk.ac.ox.softeng.maurodatamapper.plugins.database.summarymetadata.DateIntervalHelper
-import uk.ac.ox.softeng.maurodatamapper.plugins.database.summarymetadata.DecimalIntervalHelper
-import uk.ac.ox.softeng.maurodatamapper.plugins.database.summarymetadata.IntegerIntervalHelper
 import uk.ac.ox.softeng.maurodatamapper.test.integration.BaseIntegrationSpec
 import uk.ac.ox.softeng.maurodatamapper.test.json.JsonComparer
 import uk.ac.ox.softeng.maurodatamapper.util.GormUtils
@@ -37,19 +34,13 @@ import uk.ac.ox.softeng.maurodatamapper.util.Utils
 import com.google.common.base.CaseFormat
 import grails.gorm.transactions.Transactional
 import grails.util.BuildSettings
-import grails.util.Pair
 import groovy.util.logging.Slf4j
-import org.junit.Assert
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.validation.FieldError
-import spock.lang.Shared
 
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
-import java.time.temporal.ChronoUnit
 
 import static org.junit.Assert.assertEquals
 import static org.junit.Assert.assertNotNull
