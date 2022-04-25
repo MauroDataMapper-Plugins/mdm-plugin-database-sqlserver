@@ -1,5 +1,6 @@
 import java.lang.management.ManagementFactory
 import java.lang.management.RuntimeMXBean
+import java.nio.file.Files
 
 task('sysProps') {
     group 'help'
@@ -16,8 +17,13 @@ task('jvmArgs') {
     }
 }
 
+// use mdm-core to supply the notice template
+java.nio.file.Path noticePath = Files.createTempFile('notice', '.tmpl')
+Files.write(noticePath,
+            'https://raw.githubusercontent.com/MauroDataMapper/mdm-core/develop/gradle/NOTICE.tmpl'.toURL().readLines())
+
 license {
-    header = file("${rootDir}/gradle/NOTICE.tmpl")
+    header = file(noticePath)
     ext.year = Calendar.getInstance().get(Calendar.YEAR)
     excludes([
         '**/*.gson',
