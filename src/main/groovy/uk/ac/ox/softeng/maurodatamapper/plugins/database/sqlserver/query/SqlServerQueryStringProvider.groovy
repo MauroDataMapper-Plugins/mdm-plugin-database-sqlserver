@@ -18,10 +18,10 @@
 package uk.ac.ox.softeng.maurodatamapper.plugins.database.sqlserver.query
 
 import uk.ac.ox.softeng.maurodatamapper.datamodel.item.datatype.DataType
+import uk.ac.ox.softeng.maurodatamapper.datamodel.summarymetadata.AbstractIntervalHelper
 import uk.ac.ox.softeng.maurodatamapper.plugins.database.calculation.CalculationStrategy
 import uk.ac.ox.softeng.maurodatamapper.plugins.database.calculation.SamplingStrategy
 import uk.ac.ox.softeng.maurodatamapper.plugins.database.query.QueryStringProvider
-import uk.ac.ox.softeng.maurodatamapper.plugins.database.summarymetadata.AbstractIntervalHelper
 
 import java.time.format.DateTimeFormatter
 import java.time.temporal.TemporalAccessor

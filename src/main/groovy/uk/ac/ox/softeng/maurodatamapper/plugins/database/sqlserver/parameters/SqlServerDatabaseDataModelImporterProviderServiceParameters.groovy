@@ -139,7 +139,7 @@ class SqlServerDatabaseDataModelImporterProviderServiceParameters extends
 
     SQLServerDataSource getSqlServerDataSource(String databaseName) {
         log.debug 'DataSource connection using SQLServer'
-        SQLServerDataSource ds = new SQLServerDataSource().tap {
+        new SQLServerDataSource().tap {
             setServerName databaseHost
             setPortNumber databasePort
             setDatabaseName databaseName
