@@ -28,7 +28,8 @@
       "description": "Packages that come from the main mdm repos",
       "matchPackagePrefixes": [
         "uk.ac.ox.softeng.maurodatamapper:"
-      ]
+      ],
+      "enabled": false
     }
   ]
 }
