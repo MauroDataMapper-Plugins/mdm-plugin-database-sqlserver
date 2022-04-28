@@ -1,3 +1,11 @@
+import io.spring.gradle.dependencymanagement.internal.DependencyManagementConfigurationContainer
+import io.spring.gradle.dependencymanagement.internal.maven.MavenPomResolver
+import io.spring.gradle.dependencymanagement.internal.pom.Coordinates
+import io.spring.gradle.dependencymanagement.internal.pom.Pom
+import io.spring.gradle.dependencymanagement.internal.pom.PomReference
+import io.spring.gradle.dependencymanagement.internal.properties.MapPropertySource
+import io.spring.gradle.dependencymanagement.internal.properties.ProjectPropertySource
+
 buildscript {
     repositories {
         mavenLocal()
@@ -12,21 +20,13 @@ buildscript {
         classpath "org.grails.plugins:hibernate5:$grailsHibernate5Version"
         classpath "org.grails.plugins:views-gradle:$grailsViewsVersion"
         //        classpath "com.bertramlabs.plugins:asset-pipeline-gradle:$assetPipelineVersion"
-
-        // The version of spring-core included is 3.1.3.RELEASE which is incompatible with the grails-gradle-plugin used by all the
-        // the Grails modules and causes issues when trying to run-app therefore we exclude it
-        classpath("gradle.plugin.com.hierynomus.gradle.plugins:license-gradle-plugin:$licenseGradlePluginVersion") {
-            exclude group: 'org.springframework', module: 'spring-core'
-        }
-        // However without spring-core the license plugin won't work so we need to include it at the top level
-        // this version will need to be kept inline with Grails' spring-core
-        classpath "org.springframework:spring-core:$licenseGradlePluginSpringCoreOverrideVersion"
     }
 }
 
 plugins {
     id 'project-report'
     id 'jacoco'
+    id "com.github.hierynomus.license" version "${licenseGradlePluginVersion}"
 }
 
 apply plugin: "idea"
@@ -36,8 +36,6 @@ apply plugin: "org.grails.plugins.views-markup"
 //apply plugin: "com.bertramlabs.asset-pipeline"
 
 apply plugin: 'ox.softeng.grails'
-apply plugin: "com.github.hierynomus.license"
-
 
 repositories {
     mavenLocal()
@@ -92,7 +90,7 @@ dependencies {
     testImplementation "io.micronaut:micronaut-http-client"
     testImplementation "org.grails:grails-web-testing-support"
     testImplementation "org.grails:views-json-testing-support"
-    testImplementation "org.hibernate.validator:hibernate-validator:6.2.0.Final"
+    testImplementation "org.hibernate.validator:hibernate-validator"
     testImplementation "io.micronaut:micronaut-http-client"
 }
 
@@ -126,3 +124,17 @@ grails {
 apply from: 'dependencies.gradle'
 apply from: "${projectDir}/gradle/additions/mdm.gradle"
 apply from: "${projectDir}/gradle/additions/staticCodeAnalysis.gradle"
+
+controlVersionPropertiesFromMdmBom()
+
+// Pulls the properties from the mdm-bom and applies them to the project
+// Theres collisions between the gradle platform and spring dependency plugin which result in the versions we want not being used
+void controlVersionPropertiesFromMdmBom() {
+    MavenPomResolver pomResolver = new MavenPomResolver(project, new DependencyManagementConfigurationContainer(project))
+    Coordinates bomCoords = new Coordinates('uk.ac.ox.softeng.maurodatamapper', 'mdm-bom', mdmCoreVersion)
+    PomReference pomReference = new PomReference(bomCoords, new MapPropertySource([:]))
+    List<Pom> resolvedPoms = pomResolver.resolvePoms([pomReference], new ProjectPropertySource(project))
+    resolvedPoms.first().properties.sort().each {k, v ->
+        project.ext[k] = v
+    }
+}
