@@ -34,6 +34,7 @@ pipeline {
             steps {
                 sh './gradlew -v' // Output gradle version for verification checks
                 sh './gradlew jvmArgs sysProps'
+                sh './grailsw -v' // Output grails version for verification checks
             }
         }
 
@@ -52,6 +53,18 @@ pipeline {
             }
         }
 
+        stage('Unit Test') {
+
+            steps {
+                sh "./gradlew --build-cache test"
+            }
+            post {
+                always {
+                    junit allowEmptyResults: true, testResults: 'build/test-results/test/*.xml'
+                }
+            }
+        }
+
         stage('Integration Test') {
 
             steps {
@@ -59,15 +72,6 @@ pipeline {
             }
             post {
                 always {
-                    publishHTML([
-                        allowMissing         : true,
-                        alwaysLinkToLastBuild: true,
-                        keepAll              : true,
-                        reportDir            : 'build/reports/tests/integrationTest',
-                        reportFiles          : 'index.html',
-                        reportName           : 'Integration Test Report',
-                        reportTitles         : 'Test'
-                    ])
                     junit allowEmptyResults: true, testResults: 'build/test-results/integrationTest/*.xml'
                 }
             }
@@ -105,7 +109,7 @@ pipeline {
             }
             steps {
                 script {
-                    sh "./gradlew artifactoryPublish"
+                    sh "./gradlew publish"
                 }
             }
         }
@@ -113,6 +117,16 @@ pipeline {
 
     post {
         always {
+            publishHTML([
+                allowMissing         : false,
+                alwaysLinkToLastBuild: true,
+                keepAll              : true,
+                reportDir            : 'build/reports/tests',
+                reportFiles          : 'index.html',
+                reportName           : 'Test Report',
+                reportTitles         : 'Test'
+            ])
+
             recordIssues enabledForFailure: true, tools: [java(), javaDoc()]
             recordIssues enabledForFailure: true, tool: checkStyle(pattern: '**/reports/checkstyle/*.xml')
             recordIssues enabledForFailure: true, tool: codeNarc(pattern: '**/reports/codenarc/*.xml')

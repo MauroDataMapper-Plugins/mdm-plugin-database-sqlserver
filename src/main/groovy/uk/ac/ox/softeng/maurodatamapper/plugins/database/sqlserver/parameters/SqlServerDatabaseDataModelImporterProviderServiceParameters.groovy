@@ -15,7 +15,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package uk.ac.ox.softeng.maurodatamapper.plugins.database.sqlserver
+package uk.ac.ox.softeng.maurodatamapper.plugins.database.sqlserver.parameters
 
 import uk.ac.ox.softeng.maurodatamapper.core.provider.importer.parameter.config.ImportGroupConfig
 import uk.ac.ox.softeng.maurodatamapper.core.provider.importer.parameter.config.ImportParameterConfig
@@ -36,11 +36,11 @@ class SqlServerDatabaseDataModelImporterProviderServiceParameters extends
         description = [
             'Import the schemas found (or defined) as individual DataModels.',
             'Each schema DataModel will be imported with the name of the schema.'],
-        order = 3,
+        order = 2,
         optional = true,
         group = @ImportGroupConfig(
             name = 'Database Import Details',
-            order = 2
+            order = DB_IMPORT_GROUP
         ))
     Boolean importSchemasAsSeparateModels
 
@@ -49,11 +49,11 @@ class SqlServerDatabaseDataModelImporterProviderServiceParameters extends
         description = [
             'A comma-separated list of the schema names to import.',
             'If not supplied then all schemas other than "sys" and "INFORMATION_SCHEMA" will be imported.'],
-        order = 2,
+        order = 1,
         optional = true,
         group = @ImportGroupConfig(
             name = 'Database Import Details',
-            order = 2
+            order = DB_IMPORT_GROUP
         ))
     String schemaNames
 
@@ -64,7 +64,7 @@ class SqlServerDatabaseDataModelImporterProviderServiceParameters extends
         order = 1,
         group = @ImportGroupConfig(
             name = 'SQLServer DataSource Connection Details',
-            order = 1
+            order = DB_CONNECTION_GROUP
         ))
     String authenticationScheme
 
@@ -75,7 +75,7 @@ class SqlServerDatabaseDataModelImporterProviderServiceParameters extends
         order = 2,
         group = @ImportGroupConfig(
             name = 'SQLServer DataSource Connection Details',
-            order = 1
+            order = DB_CONNECTION_GROUP
         ))
     Boolean integratedSecurity
 
@@ -86,7 +86,7 @@ class SqlServerDatabaseDataModelImporterProviderServiceParameters extends
         optional = true,
         group = @ImportGroupConfig(
             name = 'SQLServer DataSource Connection Details',
-            order = 1
+            order = DB_CONNECTION_GROUP
         ))
     String domain
 
@@ -99,7 +99,7 @@ class SqlServerDatabaseDataModelImporterProviderServiceParameters extends
         optional = true,
         group = @ImportGroupConfig(
             name = 'SQLServer DataSource Connection Details',
-            order = 1
+            order = DB_CONNECTION_GROUP
         ))
     String serverInstance
 
@@ -139,7 +139,7 @@ class SqlServerDatabaseDataModelImporterProviderServiceParameters extends
 
     SQLServerDataSource getSqlServerDataSource(String databaseName) {
         log.debug 'DataSource connection using SQLServer'
-        SQLServerDataSource ds = new SQLServerDataSource().tap {
+        new SQLServerDataSource().tap {
             setServerName databaseHost
             setPortNumber databasePort
             setDatabaseName databaseName

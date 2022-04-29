@@ -17,32 +17,18 @@
  */
 package uk.ac.ox.softeng.maurodatamapper.plugins.database.sqlserver
 
-import uk.ac.ox.softeng.maurodatamapper.plugins.database.SamplingStrategy
+import uk.ac.ox.softeng.maurodatamapper.util.Utils
 
-class SqlServerSamplingStrategy extends SamplingStrategy {
+import grails.boot.GrailsApp
+import grails.boot.config.GrailsAutoConfiguration
+import grails.plugins.metadata.PluginSource
+import org.springframework.context.annotation.ComponentScan
 
-    SqlServerSamplingStrategy(Integer threshold, BigDecimal percentage) {
-        super(threshold, percentage)
-    }
-
-    /**
-     * SQL Server can only use TABLESAMPLE on tables
-     * @return
-     */
-    boolean canSample() {
-        this.tableType == 'BASE TABLE'
-    }
-
-    /**
-     * SQL Server specific TABLESAMPLE clause
-     * @return
-     */
-    @Override
-    String samplingClause() {
-        if (this.useSampling()) {
-            " TABLESAMPLE (${this.percentage} PERCENT)"
-        } else {
-            ""
-        }
+@PluginSource
+@ComponentScan(basePackages = ['uk.ac.ox.softeng.maurodatamapper'])
+class Application extends GrailsAutoConfiguration {
+    static void main(String[] args) {
+        Utils.outputRuntimeArgs(Application)
+        GrailsApp.run(Application, args)
     }
 }
