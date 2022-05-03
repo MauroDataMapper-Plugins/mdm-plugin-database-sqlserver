@@ -1,11 +1,3 @@
-import io.spring.gradle.dependencymanagement.internal.DependencyManagementConfigurationContainer
-import io.spring.gradle.dependencymanagement.internal.maven.MavenPomResolver
-import io.spring.gradle.dependencymanagement.internal.pom.Coordinates
-import io.spring.gradle.dependencymanagement.internal.pom.Pom
-import io.spring.gradle.dependencymanagement.internal.pom.PomReference
-import io.spring.gradle.dependencymanagement.internal.properties.MapPropertySource
-import io.spring.gradle.dependencymanagement.internal.properties.ProjectPropertySource
-
 buildscript {
     repositories {
         mavenLocal()
@@ -15,7 +7,7 @@ buildscript {
 
     }
     dependencies {
-        classpath "ox.softeng.gradle:oxbrcinformatics-gradle-plugins:$oxbrcinformaticsGradlePluginsVersion"
+        classpath "uk.ac.ox.softeng.maurodatamapper.gradle:mdm-gradle-plugin:$mdmGradlePluginVersion"
         classpath "org.grails:grails-gradle-plugin:$grailsGradlePluginVersion"
         classpath "org.grails.plugins:hibernate5:$grailsHibernate5Version"
         classpath "org.grails.plugins:views-gradle:$grailsViewsVersion"
@@ -26,7 +18,6 @@ buildscript {
 plugins {
     id 'project-report'
     id 'jacoco'
-    id "com.github.hierynomus.license" version "${licenseGradlePluginVersion}"
 }
 
 apply plugin: "idea"
@@ -35,7 +26,7 @@ apply plugin: "org.grails.plugins.views-json"
 apply plugin: "org.grails.plugins.views-markup"
 //apply plugin: "com.bertramlabs.asset-pipeline"
 
-apply plugin: 'ox.softeng.grails'
+apply plugin: 'uk.ac.ox.softeng.maurodatamapper.gradle.mdm-grails'
 
 repositories {
     mavenLocal()
@@ -122,19 +113,3 @@ grails {
 }
 
 apply from: 'dependencies.gradle'
-apply from: "${projectDir}/gradle/additions/mdm.gradle"
-apply from: "${projectDir}/gradle/additions/staticCodeAnalysis.gradle"
-
-controlVersionPropertiesFromMdmBom()
-
-// Pulls the properties from the mdm-bom and applies them to the project
-// Theres collisions between the gradle platform and spring dependency plugin which result in the versions we want not being used
-void controlVersionPropertiesFromMdmBom() {
-    MavenPomResolver pomResolver = new MavenPomResolver(project, new DependencyManagementConfigurationContainer(project))
-    Coordinates bomCoords = new Coordinates('uk.ac.ox.softeng.maurodatamapper', 'mdm-bom', mdmCoreVersion)
-    PomReference pomReference = new PomReference(bomCoords, new MapPropertySource([:]))
-    List<Pom> resolvedPoms = pomResolver.resolvePoms([pomReference], new ProjectPropertySource(project))
-    resolvedPoms.first().properties.sort().each {k, v ->
-        project.ext[k] = v
-    }
-}
