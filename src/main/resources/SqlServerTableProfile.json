@@ -3,6 +3,14 @@
     "sectionName": "Table / View Properties",
     "fields": [
       {
+        "fieldName": "Table Name",
+        "metadataPropertyName": "table_name",
+        "minMultiplicity": 0,
+        "maxMultiplicity": 1,
+        "dataType": "string",
+        "derived": false
+      },
+      {
         "fieldName": "Primary Key name",
         "metadataPropertyName": "primary_key_name",
         "minMultiplicity": 0,
