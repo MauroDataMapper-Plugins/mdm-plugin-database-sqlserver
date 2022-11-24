@@ -39,7 +39,7 @@ import java.sql.Connection
 import java.sql.PreparedStatement
 
 @Slf4j
-@CompileStatic
+//@CompileStatic
 class SqlServerDatabaseDataModelImporterProviderService
     extends AbstractDatabaseDataModelImporterProviderService<SqlServerDatabaseDataModelImporterProviderServiceParameters>
     implements RemoteDatabaseDataModelImporterProviderService {
