@@ -96,10 +96,10 @@ class RemoteDatabaseImporterProviderServiceSpec extends BaseDatabasePluginTest<
 
         then:
         lims
-        lims.enumerationTypes.size() == 4
+        lims.enumerationTypes.size() == 5
 
         when:
-        ByteArrayOutputStream baos = dataModelJsonExporterService.exportDataModel(UnloggedUser.instance, lims)
+        ByteArrayOutputStream baos = dataModelJsonExporterService.exportDataModel(UnloggedUser.instance, lims, null)
         Files.write(resourcesPath.resolve('lims.json'), baos.toByteArray())
 
         then:
@@ -135,7 +135,7 @@ class RemoteDatabaseImporterProviderServiceSpec extends BaseDatabasePluginTest<
         lims.enumerationTypes.size() == 0
 
         when:
-        ByteArrayOutputStream baos = dataModelJsonExporterService.exportDataModel(UnloggedUser.instance, lims)
+        ByteArrayOutputStream baos = dataModelJsonExporterService.exportDataModel(UnloggedUser.instance, lims, null)
         Files.write(resourcesPath.resolve('lims.json'), baos.toByteArray())
 
         then:
@@ -172,7 +172,7 @@ class RemoteDatabaseImporterProviderServiceSpec extends BaseDatabasePluginTest<
         lims.enumerationTypes.size() == 5
 
         when:
-        ByteArrayOutputStream baos = dataModelJsonExporterService.exportDataModel(UnloggedUser.instance, lims)
+        ByteArrayOutputStream baos = dataModelJsonExporterService.exportDataModel(UnloggedUser.instance, lims, null)
         Files.write(resourcesPath.resolve('lims.json'), baos.toByteArray())
 
         then:
@@ -214,7 +214,7 @@ class RemoteDatabaseImporterProviderServiceSpec extends BaseDatabasePluginTest<
         lims
 
         when:
-        ByteArrayOutputStream baos = dataModelJsonExporterService.exportDataModel(UnloggedUser.instance, lims)
+        ByteArrayOutputStream baos = dataModelJsonExporterService.exportDataModel(UnloggedUser.instance, lims, null)
         Files.write(resourcesPath.resolve('lims.json'), baos.toByteArray())
 
         then:
@@ -255,7 +255,7 @@ class RemoteDatabaseImporterProviderServiceSpec extends BaseDatabasePluginTest<
         lims
 
         when:
-        ByteArrayOutputStream baos = dataModelJsonExporterService.exportDataModel(UnloggedUser.instance, lims)
+        ByteArrayOutputStream baos = dataModelJsonExporterService.exportDataModel(UnloggedUser.instance, lims, null)
         Files.write(resourcesPath.resolve('lims.json'), baos.toByteArray())
 
         then:
@@ -323,7 +323,7 @@ class RemoteDatabaseImporterProviderServiceSpec extends BaseDatabasePluginTest<
         lims.enumerationTypes.size() > 1
 
         when:
-        ByteArrayOutputStream baos = dataModelJsonExporterService.exportDataModel(UnloggedUser.instance, lims)
+        ByteArrayOutputStream baos = dataModelJsonExporterService.exportDataModel(UnloggedUser.instance, lims, null)
         Files.write(resourcesPath.resolve('modules.json'), baos.toByteArray())
 
         then:
