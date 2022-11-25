@@ -101,11 +101,6 @@ abstract class BaseDatabasePluginTest<P extends DatabaseDataModelImporterProvide
         importDataModelAndRetrieveFromDatabase(params)
     }
 
-
-    DataModel saveDomain(DataModel domain) {
-        dataModelService.saveModelWithContent(domain)
-    }
-
     protected P createDatabaseImportParameters(String host, int port) {
         P params = createDatabaseImportParameters()
         params.setDatabaseHost(host)
@@ -175,7 +170,6 @@ abstract class BaseDatabasePluginTest<P extends DatabaseDataModelImporterProvide
             log.info('Validating imported model')
             if (dataModelService.validate(importedModel)) {
                 log.info('Saving valid imported model')
-                saveDomain(importedModel)
             } else {
                 GormUtils.outputDomainErrors(getMessageSource(), importedModel)
                 fail('Domain is invalid')
@@ -215,8 +209,7 @@ abstract class BaseDatabasePluginTest<P extends DatabaseDataModelImporterProvide
 
             if (validate) {
                 importedModels.each {domain ->
-                    if (domain.validate()) saveDomain(domain)
-                    else {
+                    if (!domain.validate()) {
                         GormUtils.outputDomainErrors(getMessageSource(), domain)
                         fail('Domain is invalid')
                     }
