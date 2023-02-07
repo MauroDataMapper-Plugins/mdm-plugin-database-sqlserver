@@ -169,7 +169,7 @@ class RemoteDatabaseImporterProviderServiceSpec extends BaseDatabasePluginTest<
 
         then:
         lims
-        lims.enumerationTypes.size() == 5
+        lims.enumerationTypes.size() == 6
 
         when:
         ByteArrayOutputStream baos = dataModelJsonExporterService.exportDataModel(UnloggedUser.instance, lims, null)
