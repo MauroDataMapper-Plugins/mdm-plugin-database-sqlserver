@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 University of Oxford and Health and Social Care Information Centre, also known as NHS Digital
+ * Copyright 2020-2023 University of Oxford and NHS England
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -96,10 +96,10 @@ class RemoteDatabaseImporterProviderServiceSpec extends BaseDatabasePluginTest<
 
         then:
         lims
-        lims.enumerationTypes.size() == 4
+        lims.enumerationTypes.size() == 5
 
         when:
-        ByteArrayOutputStream baos = dataModelJsonExporterService.exportDataModel(UnloggedUser.instance, lims)
+        ByteArrayOutputStream baos = dataModelJsonExporterService.exportDataModel(UnloggedUser.instance, lims, null)
         Files.write(resourcesPath.resolve('lims.json'), baos.toByteArray())
 
         then:
@@ -135,7 +135,7 @@ class RemoteDatabaseImporterProviderServiceSpec extends BaseDatabasePluginTest<
         lims.enumerationTypes.size() == 0
 
         when:
-        ByteArrayOutputStream baos = dataModelJsonExporterService.exportDataModel(UnloggedUser.instance, lims)
+        ByteArrayOutputStream baos = dataModelJsonExporterService.exportDataModel(UnloggedUser.instance, lims, null)
         Files.write(resourcesPath.resolve('lims.json'), baos.toByteArray())
 
         then:
@@ -169,10 +169,10 @@ class RemoteDatabaseImporterProviderServiceSpec extends BaseDatabasePluginTest<
 
         then:
         lims
-        lims.enumerationTypes.size() == 5
+        lims.enumerationTypes.size() == 6
 
         when:
-        ByteArrayOutputStream baos = dataModelJsonExporterService.exportDataModel(UnloggedUser.instance, lims)
+        ByteArrayOutputStream baos = dataModelJsonExporterService.exportDataModel(UnloggedUser.instance, lims, null)
         Files.write(resourcesPath.resolve('lims.json'), baos.toByteArray())
 
         then:
@@ -214,7 +214,7 @@ class RemoteDatabaseImporterProviderServiceSpec extends BaseDatabasePluginTest<
         lims
 
         when:
-        ByteArrayOutputStream baos = dataModelJsonExporterService.exportDataModel(UnloggedUser.instance, lims)
+        ByteArrayOutputStream baos = dataModelJsonExporterService.exportDataModel(UnloggedUser.instance, lims, null)
         Files.write(resourcesPath.resolve('lims.json'), baos.toByteArray())
 
         then:
@@ -255,7 +255,7 @@ class RemoteDatabaseImporterProviderServiceSpec extends BaseDatabasePluginTest<
         lims
 
         when:
-        ByteArrayOutputStream baos = dataModelJsonExporterService.exportDataModel(UnloggedUser.instance, lims)
+        ByteArrayOutputStream baos = dataModelJsonExporterService.exportDataModel(UnloggedUser.instance, lims, null)
         Files.write(resourcesPath.resolve('lims.json'), baos.toByteArray())
 
         then:
@@ -323,7 +323,7 @@ class RemoteDatabaseImporterProviderServiceSpec extends BaseDatabasePluginTest<
         lims.enumerationTypes.size() > 1
 
         when:
-        ByteArrayOutputStream baos = dataModelJsonExporterService.exportDataModel(UnloggedUser.instance, lims)
+        ByteArrayOutputStream baos = dataModelJsonExporterService.exportDataModel(UnloggedUser.instance, lims, null)
         Files.write(resourcesPath.resolve('modules.json'), baos.toByteArray())
 
         then:

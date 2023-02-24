@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 University of Oxford and Health and Social Care Information Centre, also known as NHS Digital
+ * Copyright 2020-2023 University of Oxford and NHS England
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -107,7 +107,7 @@ class SqlServerQueryStringProvider extends QueryStringProvider{
 FROM sys.dm_db_partition_stats
 WHERE object_id = OBJECT_ID('${fullTableName}')
 AND (index_id = 0 OR index_id = 1)""".stripIndent(),
-            "SELECT COUNT_BIG(*) AS approx_count FROM ${fullTableName}".toString()
+            "SELECT COUNT_BIG(*) AS approx_count FROM ${fullTableName} WITH (NOLOCK)".toString()
         ]
     }
 
@@ -116,7 +116,7 @@ AND (index_id = 0 OR index_id = 1)""".stripIndent(),
                                            String schemaName = null) {
         String schemaIdentifier = schemaName ? "${escapeIdentifier(schemaName)}." : ""
         """SELECT TOP (${calculationStrategy.maxEnumerations + 1}) ${escapeIdentifier(columnName)} AS distinct_value
-FROM ${schemaIdentifier}${escapeIdentifier(tableName)} ${samplingStrategy.samplingClause(SamplingStrategy.Type.ENUMERATION_VALUES)}
+FROM ${schemaIdentifier}${escapeIdentifier(tableName)} ${samplingStrategy.samplingClause(SamplingStrategy.Type.ENUMERATION_VALUES)}  WITH (NOLOCK)
 WHERE ${escapeIdentifier(columnName)} <> ''
 GROUP BY ${escapeIdentifier(columnName)}""".stripIndent()
     }
@@ -144,9 +144,18 @@ GROUP BY ${escapeIdentifier(columnName)}""".stripIndent()
         """SELECT 
   ${escapeIdentifier(schemaName)}.${escapeIdentifier(tableName)}.${escapeIdentifier(columnName)} AS enumeration_value,
   ${samplingStrategy.scaleFactor()} * COUNT_BIG(*) AS enumeration_count
-FROM ${escapeIdentifier(schemaName)}.${escapeIdentifier(tableName)} ${samplingStrategy.samplingClause(SamplingStrategy.Type.SUMMARY_METADATA)}
+FROM ${escapeIdentifier(schemaName)}.${escapeIdentifier(tableName)} ${samplingStrategy.samplingClause(SamplingStrategy.Type.SUMMARY_METADATA)} WITH (NOLOCK)
 GROUP BY ${escapeIdentifier(schemaName)}.${escapeIdentifier(tableName)}.${escapeIdentifier(columnName)}
 ORDER BY ${escapeIdentifier(schemaName)}.${escapeIdentifier(tableName)}.${escapeIdentifier(columnName)}""".stripIndent()
+    }
+
+    @Override
+    String minMaxColumnValuesQueryString(SamplingStrategy samplingStrategy, String columnName, String tableName, String schemaName = null) {
+        String schemaIdentifier = schemaName ? "${escapeIdentifier(schemaName)}." : ""
+        """SELECT MIN(${escapeIdentifier(columnName)}) AS min_value, 
+MAX(${escapeIdentifier(columnName)}) AS max_value 
+FROM ${schemaIdentifier}${escapeIdentifier(tableName)} ${samplingStrategy.samplingClause(SamplingStrategy.Type.SUMMARY_METADATA)} WITH (NOLOCK)
+WHERE ${escapeIdentifier(columnName)} IS NOT NULL""".stripIndent()
     }
 
     /**
@@ -178,7 +187,7 @@ ORDER BY ${escapeIdentifier(schemaName)}.${escapeIdentifier(tableName)}.${escape
 SELECT 
     interval_label, 
     ${samplingStrategy.scaleFactor()} * COUNT_BIG(${escapeIdentifier(columnName)}) AS interval_count
-FROM intervals
+FROM intervals WITH (NOLOCK)
 LEFT JOIN ${table} ${samplingStrategy.samplingClause(SamplingStrategy.Type.SUMMARY_METADATA)}
     ON ${column} >= intervals.interval_start AND ${column} < intervals.interval_end
 GROUP BY interval_label, interval_start
