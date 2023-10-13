@@ -563,9 +563,9 @@ class SqlServerDatabaseDataModelImporterProviderServiceSpec
 
         //Map of column name to expected summary metadata description:reportValue. Expect exact counts.
         Map<String, Map<String, String>> expectedColumns = [
-                "org_code": ['Enumeration Value Distribution':'{"CODER":2,"CODEX":19,"CODEY":9,"CODEZ":11}'],
-                "org_type": ['Enumeration Value Distribution':'{"TYPEA":17,"TYPEB":22,"TYPEC":2}'],
-                "org_char": ['Enumeration Value Distribution':'{"NULL":1,"     ":1,"CHAR1":7,"CHAR2":13,"CHAR3":19}']
+                "org_code": ['Enumeration Value Distribution':'{"CODER":10,"CODEX":19,"CODEY":10,"CODEZ":11}'],
+                "org_type": ['Enumeration Value Distribution':'{"TYPEA":17,"TYPEB":22,"TYPEC":10}'],
+                "org_char": ['Enumeration Value Distribution':'{"NULL":10,"     ":10,"CHAR1":10,"CHAR2":13,"CHAR3":19}']
         ]
 
         expectedColumns.each {columnName, expectedReport ->
@@ -642,25 +642,25 @@ class SqlServerDatabaseDataModelImporterProviderServiceSpec
         //sample_tinyint
         final DataElement sample_tinyint = sampleTable.dataElements.find{it.label == "sample_tinyint"}
         assertEquals 'reportValue for sample_tinyint',
-                '{"0 - 10":19,"10 - 20":20,"20 - 30":20,"30 - 40":20,"40 - 50":20,"50 - 60":20,"60 - 70":20,"70 - 80":20,"80 - 90":20,"90 - 100":20,"100 - 110":2}',
+                '{"0 - 9":19,"10 - 19":20,"20 - 29":20,"30 - 39":20,"40 - 49":20,"50 - 59":20,"60 - 69":20,"70 - 79":20,"80 - 89":20,"90 - 99":20,"100 - 109":10}',
                 sample_tinyint.summaryMetadata[0].summaryMetadataReports[0].reportValue
 
         //sample_smallint
         final DataElement sample_smallint = sampleTable.dataElements.find{it.label == "sample_smallint"}
         assertEquals 'reportValue for sample_smallint',
-                '{"-100 - -80":20,"-80 - -60":20,"-60 - -40":20,"-40 - -20":20,"-20 - 0":20,"0 - 20":20,"20 - 40":20,"40 - 60":20,"60 - 80":20,"80 - 100":20,"100 - 120":1}',
+                '{"-100 - -81":20,"-80 - -61":20,"-60 - -41":20,"-40 - -21":20,"-20 - -1":20,"0 - 19":20,"20 - 39":20,"40 - 59":20,"60 - 79":20,"80 - 99":20,"100 - 119":10}',
                 sample_smallint.summaryMetadata[0].summaryMetadataReports[0].reportValue
 
         //sample_bigint
         final DataElement sample_bigint = sampleTable.dataElements.find{it.label == "sample_bigint"}
         assertEquals 'reportValue for sample_bigint',
-                '{"-1000000 - -800000":8,"-800000 - -600000":8,"-600000 - -400000":11,"-400000 - -200000":15,"-200000 - 0":58,"0 - 200000":59,"200000 - 400000":15,"400000 - 600000":11,"600000 - 800000":8,"800000 - 1000000":7,"1000000 - 1200000":1}',
+                '{"-1000000 - -800001":10,"-800000 - -600001":10,"-600000 - -400001":11,"-400000 - -200001":15,"-200000 - -1":58,"0 - 199999":59,"200000 - 399999":15,"400000 - 599999":11,"600000 - 799999":10,"800000 - 999999":10,"1000000 - 1199999":10}',
                 sample_bigint.summaryMetadata[0].summaryMetadataReports[0].reportValue
 
         //sample_int
         final DataElement sample_int = sampleTable.dataElements.find{it.label == "sample_int"}
         assertEquals 'reportValue for sample_int',
-                '{"0 - 1000":63,"1000 - 2000":26,"2000 - 3000":20,"3000 - 4000":18,"4000 - 5000":14,"5000 - 6000":14,"6000 - 7000":12,"7000 - 8000":12,"8000 - 9000":10,"9000 - 10000":10,"10000 - 11000":2}',
+                '{"0 - 999":63,"1000 - 1999":26,"2000 - 2999":20,"3000 - 3999":18,"4000 - 4999":14,"5000 - 5999":14,"6000 - 6999":12,"7000 - 7999":12,"8000 - 8999":10,"9000 - 9999":10,"10000 - 10999":10}',
                 sample_int.summaryMetadata[0].summaryMetadataReports[0].reportValue
 
         //sample_decimal
@@ -672,31 +672,31 @@ class SqlServerDatabaseDataModelImporterProviderServiceSpec
         //sample_numeric
         final DataElement sample_numeric = sampleTable.dataElements.find{it.label == "sample_numeric"}
         assertEquals 'reportValue for sample_numeric',
-                '{"-10.00 - -8.00":6,"-8.00 - -6.00":9,"-6.00 - -4.00":11,"-4.00 - -2.00":15,"-2.00 - 0.00":59,"0.00 - 2.00":60,"2.00 - 4.00":15,"4.00 - 6.00":11,"6.00 - 8.00":9,"8.00 - 10.00":6}',
+                '{"-10.00 - -8.00":10,"-8.00 - -6.00":10,"-6.00 - -4.00":11,"-4.00 - -2.00":15,"-2.00 - 0.00":59,"0.00 - 2.00":60,"2.00 - 4.00":15,"4.00 - 6.00":11,"6.00 - 8.00":10,"8.00 - 10.00":10}',
                 sample_numeric.summaryMetadata[0].summaryMetadataReports[0].reportValue
 
         //sample_date
         final DataElement sample_date = sampleTable.dataElements.find{it.label == "sample_date"}
         assertEquals 'reportValue for sample_date',
-                '{"May 2020":8,"Jun 2020":30,"Jul 2020":31,"Aug 2020":31,"Sept 2020":30,"Oct 2020":31,"Nov 2020":30,"Dec 2020":10}',
+                '{"May 2020":10,"Jun 2020":30,"Jul 2020":31,"Aug 2020":31,"Sept 2020":30,"Oct 2020":31,"Nov 2020":30,"Dec 2020":10}',
                 sample_date.summaryMetadata[0].summaryMetadataReports[0].reportValue
 
         //sample_smalldatetime
         final DataElement sample_smalldatetime = sampleTable.dataElements.find{it.label == "sample_smalldatetime"}
         assertEquals 'reportValue for sample_smalldatetime',
-                '{"2012 - 2014":20,"2014 - 2016":24,"2016 - 2018":24,"2018 - 2020":24,"2020 - 2022":24,"2022 - 2024":24,"2024 - 2026":24,"2026 - 2028":24,"2028 - 2030":13}',
+                '{"2012 - 2013":20,"2014 - 2015":24,"2016 - 2017":24,"2018 - 2019":24,"2020 - 2021":24,"2022 - 2023":24,"2024 - 2025":24,"2026 - 2027":24,"2028 - 2029":13}',
                 sample_smalldatetime.summaryMetadata[0].summaryMetadataReports[0].reportValue
 
         //sample_datetime
         final DataElement sample_datetime = sampleTable.dataElements.find{it.label == "sample_datetime"}
         assertEquals 'reportValue for sample_datetime',
-                '{"1920 - 1930":10,"1930 - 1940":10,"1940 - 1950":10,"1950 - 1960":10,"1960 - 1970":10,"1970 - 1980":10,"1980 - 1990":10,"1990 - 2000":10,"2000 - 2010":10,"2010 - 2020":10,"2020 - 2030":10,"2030 - 2040":10,"2040 - 2050":10,"2050 - 2060":10,"2060 - 2070":10,"2070 - 2080":10,"2080 - 2090":10,"2090 - 2100":10,"2100 - 2110":10,"2110 - 2120":10,"2120 - 2130":1}',
+                '{"1920 - 1929":10,"1930 - 1939":10,"1940 - 1949":10,"1950 - 1959":10,"1960 - 1969":10,"1970 - 1979":10,"1980 - 1989":10,"1990 - 1999":10,"2000 - 2009":10,"2010 - 2019":10,"2020 - 2029":10,"2030 - 2039":10,"2040 - 2049":10,"2050 - 2059":10,"2060 - 2069":10,"2070 - 2079":10,"2080 - 2089":10,"2090 - 2099":10,"2100 - 2109":10,"2110 - 2119":10,"2120 - 2129":10}',
                 sample_datetime.summaryMetadata[0].summaryMetadataReports[0].reportValue
 
         //sample_datetime2
         final DataElement sample_datetime2 = sampleTable.dataElements.find{it.label == "sample_datetime2"}
         assertEquals 'reportValue for sample_datetime2',
-                '{"27/08/2020":4,"28/08/2020":24,"29/08/2020":24,"30/08/2020":24,"31/08/2020":24,"01/09/2020":24,"02/09/2020":24,"03/09/2020":24,"04/09/2020":24,"05/09/2020":5}',
+                '{"27/08/2020":10,"28/08/2020":24,"29/08/2020":24,"30/08/2020":24,"31/08/2020":24,"01/09/2020":24,"02/09/2020":24,"03/09/2020":24,"04/09/2020":24,"05/09/2020":10}',
                 sample_datetime2.summaryMetadata[0].summaryMetadataReports[0].reportValue
 
     }
@@ -740,9 +740,9 @@ class SqlServerDatabaseDataModelImporterProviderServiceSpec
 
         //Map of column name to expected summary metadata description:reportValue. Expect exact counts.
         Map<String, Map<String, String>> expectedColumns = [
-                "sample_bigint": ['Value Distribution':'{"0 - 50000":49999,"50000 - 100000":50000,"100000 - 150000":50000,"150000 - 200000":50000,"200000 - 250000":50000,"250000 - 300000":50000,"300000 - 350000":50000,"350000 - 400000":50000,"400000 - 450000":50000,"450000 - 500000":50000,"500000 - 550000":1}'],
+                "sample_bigint": ['Value Distribution':'{"0 - 49999":49999,"50000 - 99999":50000,"100000 - 149999":50000,"150000 - 199999":50000,"200000 - 249999":50000,"250000 - 299999":50000,"300000 - 349999":50000,"350000 - 399999":50000,"400000 - 449999":50000,"450000 - 499999":50000,"500000 - 549999":10}'],
                 "sample_decimal": ['Value Distribution':'{"-1.00 - -0.80":102272,"-0.80 - -0.60":45195,"-0.60 - -0.40":36947,"-0.40 - -0.20":33440,"-0.20 - 0.00":32070,"0.00 - 0.20":32052,"0.20 - 0.40":33429,"0.40 - 0.60":36919,"0.60 - 0.80":45138,"0.80 - 1.00":97513,"1.00 - 1.20":5025}'],
-                "sample_date": ['Value Distribution':'{"Jan 2020 - Mar 2020":59901,"Mar 2020 - May 2020":82660,"May 2020 - Jul 2020":55581,"Jul 2020 - Sept 2020":50276,"Sept 2020 - Nov 2020":50071,"Nov 2020 - Jan 2021":54919,"Jan 2021 - Mar 2021":74811,"Mar 2021 - May 2021":71781}'],
+                "sample_date": ['Value Distribution':'{"Jan 2020 - Feb 2020":59901,"Mar 2020 - Apr 2020":82660,"May 2020 - Jun 2020":55581,"Jul 2020 - Aug 2020":50276,"Sept 2020 - Oct 2020":50071,"Nov 2020 - Dec 2020":54919,"Jan 2021 - Feb 2021":74811,"Mar 2021 - Apr 2021":71781}'],
                 "sample_varchar": ['Enumeration Value Distribution':'{"ENUM0":33333,"ENUM1":33334,"ENUM10":33333,"ENUM11":33333,"ENUM12":33333,"ENUM13":33333,"ENUM14":33333,"ENUM2":33334,"ENUM3":33334,"ENUM4":33334,"ENUM5":33334,"ENUM6":33333,"ENUM7":33333,"ENUM8":33333,"ENUM9":33333}']
         ]
 
