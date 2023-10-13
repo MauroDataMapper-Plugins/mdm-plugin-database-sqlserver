@@ -31,7 +31,7 @@ class SqlServerCalculationStrategy extends CalculationStrategy{
 
     @Override
     boolean isColumnPossibleEnumeration(DataType dataType) {
-        dataType.domainType == 'PrimitiveType' && ['char', 'varchar', 'nchar', 'nvarchar'].contains(dataType.label)
+        dataType.domainType == 'PrimitiveType' && ['char', 'varchar', 'nchar', 'nvarchar', 'int', 'bigint', 'tinyint', 'smallint'].contains(dataType.label)
     }
 
     @Override

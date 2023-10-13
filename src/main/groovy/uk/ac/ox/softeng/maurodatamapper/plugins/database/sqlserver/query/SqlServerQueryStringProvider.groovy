@@ -113,9 +113,10 @@ AND (index_id = 0 OR index_id = 1)""".stripIndent(),
 
     @Override
     String distinctColumnValuesQueryString(CalculationStrategy calculationStrategy, SamplingStrategy samplingStrategy, String columnName, String tableName,
-                                           String schemaName = null) {
+                                           String schemaName = null, boolean allValues = false) {
         String schemaIdentifier = schemaName ? "${escapeIdentifier(schemaName)}." : ""
-        """SELECT TOP (${calculationStrategy.maxEnumerations + 1}) ${escapeIdentifier(columnName)} AS distinct_value
+        String limitClause = allValues ? "" : "TOP (${calculationStrategy.maxEnumerations + 1})"
+        """SELECT ${limitClause} ${escapeIdentifier(columnName)} AS distinct_value
 FROM ${schemaIdentifier}${escapeIdentifier(tableName)} ${samplingStrategy.samplingClause(SamplingStrategy.Type.ENUMERATION_VALUES)}  WITH (NOLOCK)
 WHERE ${escapeIdentifier(columnName)} <> ''
 GROUP BY ${escapeIdentifier(columnName)}""".stripIndent()
@@ -126,9 +127,9 @@ GROUP BY ${escapeIdentifier(columnName)}""".stripIndent()
                                               AbstractIntervalHelper intervalHelper,
                                               String columnName, String tableName, String schemaName) {
         List<String> selects = intervalHelper.intervals.collect {
-            """SELECT 
-  '${it.key}' AS interval_label, 
-  ${formatDataType(dataType, it.value.aValue)} AS interval_start, 
+            """SELECT
+  '${it.key}' AS interval_label,
+  ${formatDataType(dataType, it.value.aValue)} AS interval_start,
   ${formatDataType(dataType, it.value.bValue)} AS interval_end""".stripIndent()
         }
 
@@ -141,7 +142,7 @@ GROUP BY ${escapeIdentifier(columnName)}""".stripIndent()
                                                    String tableName,
                                                    String schemaName) {
 
-        """SELECT 
+        """SELECT
   ${escapeIdentifier(schemaName)}.${escapeIdentifier(tableName)}.${escapeIdentifier(columnName)} AS enumeration_value,
   ${samplingStrategy.scaleFactor()} * COUNT_BIG(*) AS enumeration_count
 FROM ${escapeIdentifier(schemaName)}.${escapeIdentifier(tableName)} ${samplingStrategy.samplingClause(SamplingStrategy.Type.SUMMARY_METADATA)} WITH (NOLOCK)
@@ -152,10 +153,15 @@ ORDER BY ${escapeIdentifier(schemaName)}.${escapeIdentifier(tableName)}.${escape
     @Override
     String minMaxColumnValuesQueryString(SamplingStrategy samplingStrategy, String columnName, String tableName, String schemaName = null) {
         String schemaIdentifier = schemaName ? "${escapeIdentifier(schemaName)}." : ""
-        """SELECT MIN(${escapeIdentifier(columnName)}) AS min_value, 
-MAX(${escapeIdentifier(columnName)}) AS max_value 
+        """SELECT MIN(${escapeIdentifier(columnName)}) AS min_value,
+MAX(${escapeIdentifier(columnName)}) AS max_value
 FROM ${schemaIdentifier}${escapeIdentifier(tableName)} ${samplingStrategy.samplingClause(SamplingStrategy.Type.SUMMARY_METADATA)} WITH (NOLOCK)
 WHERE ${escapeIdentifier(columnName)} IS NOT NULL""".stripIndent()
+    }
+
+    @Override
+    String greaterThanOrEqualRowCountQueryString(String tableName, String schemaName) {
+        """SELECT 'GTE' FROM ${escapeIdentifier(schemaName)}.${escapeIdentifier(tableName)} WITH (NOLOCK) HAVING COUNT(*) >= ?"""
     }
 
     /**
@@ -184,8 +190,8 @@ WHERE ${escapeIdentifier(columnName)} IS NOT NULL""".stripIndent()
         String table = "${escapeIdentifier(schemaName)}.${escapeIdentifier(tableName)}"
         "WITH intervals AS (\n${intervals}\n)" +
         """
-SELECT 
-    interval_label, 
+SELECT
+    interval_label,
     ${samplingStrategy.scaleFactor()} * COUNT_BIG(${escapeIdentifier(columnName)}) AS interval_count
 FROM intervals WITH (NOLOCK)
 LEFT JOIN ${table} ${samplingStrategy.samplingClause(SamplingStrategy.Type.SUMMARY_METADATA)}
