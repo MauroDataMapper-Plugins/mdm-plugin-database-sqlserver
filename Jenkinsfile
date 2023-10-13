@@ -83,16 +83,16 @@ pipeline {
             }
         }
 
-        stage('Sonarqube') {
-            when {
-                branch 'develop'
-            }
-            steps {
-                withSonarQubeEnv('JenkinsQube') {
-                    sh "./gradlew sonarqube"
-                }
-            }
-        }
+//         stage('Sonarqube') {
+//             when {
+//                 branch 'develop'
+//             }
+//             steps {
+//                 withSonarQubeEnv('JenkinsQube') {
+//                     sh "./gradlew sonarqube"
+//                 }
+//             }
+//         }
 
         stage('Deploy to Artifactory') {
             when {
