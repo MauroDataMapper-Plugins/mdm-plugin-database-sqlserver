@@ -65,8 +65,10 @@ class SqlServerQueryStringProvider extends QueryStringProvider{
         '''
         SELECT
           f.name                                                     AS constraint_name,
+          OBJECT_SCHEMA_NAME(f.parent_object_id)                     AS schema_name,
           OBJECT_NAME(f.parent_object_id)                            AS table_name,
           COL_NAME(fc.parent_object_id, fc.parent_column_id)         AS column_name,
+          OBJECT_SCHEMA_NAME(f.referenced_object_id)                 AS reference_schema_name,
           OBJECT_NAME(f.referenced_object_id)                        AS reference_table_name,
           COL_NAME(fc.referenced_object_id, fc.referenced_column_id) AS reference_column_name
         FROM sys.foreign_keys AS f

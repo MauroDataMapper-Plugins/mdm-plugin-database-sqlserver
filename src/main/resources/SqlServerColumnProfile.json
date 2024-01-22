@@ -11,8 +11,33 @@
         "derived": false
       },
       {
+        "fieldName": "Original Data Type",
+        "metadataPropertyName": "original_data_type",
+        "description": "SQL data type of column (original column type if Enumeration Value or Foreign Key reference)",
+        "minMultiplicity": 1,
+        "maxMultiplicity": 1,
+        "dataType": "string",
+        "derived" : false
+      },
+      {
         "fieldName": "Foreign Key Name",
         "metadataPropertyName": "foreign_key_name",
+        "minMultiplicity": 0,
+        "maxMultiplicity": 1,
+        "dataType": "string",
+        "derived": false
+      },
+      {
+        "fieldName": "Foreign Key Schema",
+        "metadataPropertyName": "foreign_key_schema",
+        "minMultiplicity": 0,
+        "maxMultiplicity": 1,
+        "dataType": "string",
+        "derived": false
+      },
+      {
+        "fieldName": "Foreign Key Table",
+        "metadataPropertyName": "foreign_key_table",
         "minMultiplicity": 0,
         "maxMultiplicity": 1,
         "dataType": "string",
