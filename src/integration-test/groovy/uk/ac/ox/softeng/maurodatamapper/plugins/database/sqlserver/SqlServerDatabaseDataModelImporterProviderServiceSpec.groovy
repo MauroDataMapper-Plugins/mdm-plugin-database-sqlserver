@@ -149,11 +149,11 @@ class SqlServerDatabaseDataModelImporterProviderServiceSpec
 
         then:
         assertEquals 'Default DT Provider', 40, defaultDataTypeLabels.size()
-        assertEquals 'Number of columntypes/datatypes', 48, dataModel.dataTypes?.size()
+        assertEquals 'Number of columntypes/datatypes', 49, dataModel.dataTypes?.size()
         assertTrue 'All primitive DTs map to a default DT', dataModel.primitiveTypes.findAll {!(it.label in defaultDataTypeLabels)}.isEmpty()
         assertEquals 'Number of primitive types', 40, dataModel.dataTypes.findAll {it.domainType == 'PrimitiveType'}.size()
         assertEquals 'Number of reference types', 2, dataModel.dataTypes.findAll {it.domainType == 'ReferenceType'}.size()
-        assertEquals 'Number of enumeration types', 6, dataModel.dataTypes.findAll {it.domainType == 'EnumerationType'}.size()
+        assertEquals 'Number of enumeration types', 7, dataModel.dataTypes.findAll {it.domainType == 'EnumerationType'}.size()
         assertEquals 'Number of tables/dataclasses', 8, dataModel.dataClasses?.size()
         assertEquals 'Number of child tables/dataclasses', 1, dataModel.childDataClasses?.size()
 
