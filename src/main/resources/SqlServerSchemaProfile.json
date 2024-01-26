@@ -1,0 +1,15 @@
+[
+  {
+    "sectionName": "Schema Properties",
+    "fields": [
+      {
+        "fieldName": "Schema Name",
+        "metadataPropertyName": "schema_name",
+        "minMultiplicity": 0,
+        "maxMultiplicity": 1,
+        "dataType": "string",
+        "derived": false
+      }
+    ]
+  }
+]

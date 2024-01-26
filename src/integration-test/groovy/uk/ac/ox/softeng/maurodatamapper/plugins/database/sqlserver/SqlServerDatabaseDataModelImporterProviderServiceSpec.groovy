@@ -394,18 +394,16 @@ class SqlServerDatabaseDataModelImporterProviderServiceSpec
 
         //The public schema 'dbo' should have an extended property in metadata
         assertEquals 'public schema is dbo', 'dbo', publicSchema.label
-        //TODO this assertion fails because somehow the metadata does not get persisted when saved during this test,
-        //although it works OK when using the plugin for real.
-        /*assertTrue 'desc extended property present', publicSchema.getMetadata().any{Metadata md ->
-            md.key == 'desc' && md.value == 'Contains objects used for testing'
-        }*/
+        assertTrue 'desc extended property present', publicSchema.getMetadata().any {Metadata md ->
+            md.key == 'SCHEMA-DESCRIPTION' && md.value == 'Contains objects used for testing'
+        }
 
         final Set<DataClass> dataClasses = publicSchema.dataClasses
 
         // Tables
         final DataClass metadataTable = dataClasses.find {it.label == 'metadata'}
         assertEquals 'Metadata Number of columns/dataElements', 10, metadataTable.dataElements.size()
-        assertEquals 'Metadata Number of metadata', 3, metadataTable.metadata.size()
+        assertEquals 'Metadata Number of metadata', 5, metadataTable.metadata.size()
 
         assertTrue 'MD All metadata values are valid', metadataTable.metadata.every {it.value && it.key != it.value}
 
@@ -425,7 +423,7 @@ class SqlServerDatabaseDataModelImporterProviderServiceSpec
 
         final DataClass ciTable = dataClasses.find {it.label == 'catalogue_item'}
         assertEquals 'CI Number of columns/dataElements', 10, ciTable.dataElements.size()
-        assertEquals 'CI Number of metadata', 3, ciTable.metadata.size()
+        assertEquals 'CI Number of metadata', 5, ciTable.metadata.size()
 
         assertTrue 'CI All metadata values are valid', ciTable.metadata.every {it.value && it.key != it.value}
 
@@ -438,9 +436,15 @@ class SqlServerDatabaseDataModelImporterProviderServiceSpec
         assertEquals 'CI Primary indexes', 1, indexesInfo.findAll {it.primaryIndex}.size()
         assertEquals 'CI indexes', 2, indexesInfo.findAll {!it.uniqueIndex && !it.primaryIndex}.size()
 
+        assertTrue 'Foreign key has metadata set', ciTable.dataElements.find {it.label == 'created_by_id'}.metadata.findAll {
+            it.key in ['foreign_key_name', 'foreign_key_schema', 'foreign_key_table', 'foreign_key_columns', 'original_data_type']
+        }.every {
+            it.value
+        }
+
         final DataClass cuTable = dataClasses.find {it.label == 'catalogue_user'}
         assertEquals 'CU Number of columns/dataElements', 18, cuTable.dataElements.size()
-        assertEquals 'CU Number of metadata', 5, cuTable.metadata.size()
+        assertEquals 'CU Number of metadata', 7, cuTable.metadata.size()
 
         assertTrue 'CU All metadata values are valid', cuTable.metadata.every {it.value && it.key != it.value}
 
@@ -461,11 +465,17 @@ class SqlServerDatabaseDataModelImporterProviderServiceSpec
         assertEquals 'CI mandatory elements', 9, ciTable.dataElements.count {it.minMultiplicity == 1}
         assertEquals 'CI optional element description', 0, ciTable.findDataElement('description').minMultiplicity
         assertEquals 'CU mandatory elements', 10, cuTable.dataElements.count {it.minMultiplicity == 1}
+
+        final DataClass bsTable = dataClasses.find {it.label == 'bigger_sample'}
+        assertTrue 'Table has table type of "BASE TABLE"', bsTable.metadata.any {it.key == 'table_type' && it.value == 'BASE TABLE'}
+
+        final DataClass bsView = dataClasses.find {it.label == 'bigger_sample_view'}
+        assertTrue 'View has table type of "VIEW"', bsView.metadata.any {it.key == 'table_type' && it.value == 'VIEW'}
     }
 
     private void checkOrganisationMetadata(DataClass organisationTable) {
         // Expect 4 metadata - 2 for the primary key and 1 for indexes, 1 for extended property
-        assertEquals 'Organisation Number of metadata', 4, organisationTable.metadata.size()
+        assertEquals 'Organisation Number of metadata', 6, organisationTable.metadata.size()
 
         assertTrue 'Extended property DESCRIPTION exists on organisation', organisationTable.getMetadata().any {Metadata md ->
             md.key == 'DESCRIPTION' && md.value == 'A table about organisations'
@@ -554,6 +564,10 @@ class SqlServerDatabaseDataModelImporterProviderServiceSpec
         assertNotNull 'Enumeration value found', orgCharEnumerationType.enumerationValues.find{it.key == 'CHAR2'}
         assertNotNull 'Enumeration value found', orgCharEnumerationType.enumerationValues.find{it.key == 'CHAR3'}
         assertNull 'Not an expected value', orgCharEnumerationType.enumerationValues.find{it.key == 'CHAR4'}
+
+        assertTrue 'EnumerationType has metadata set', organisationTable.dataElements.find {
+            it.label == 'org_code' && it.dataType instanceof EnumerationType
+        }.metadata.any {it.key == 'original_data_type' && it.value == 'varchar'}
     }
 
     private void checkOrganisationSummaryMetadata(DataModel dataModel) {
