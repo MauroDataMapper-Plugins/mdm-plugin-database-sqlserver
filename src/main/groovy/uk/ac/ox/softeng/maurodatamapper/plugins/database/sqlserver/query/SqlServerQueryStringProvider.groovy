@@ -29,7 +29,7 @@ import java.time.temporal.TemporalAccessor
 /**
  * @since 11/03/2022
  */
-class SqlServerQueryStringProvider extends QueryStringProvider{
+class SqlServerQueryStringProvider extends QueryStringProvider {
 
     @Override
     String getIndexInformationQueryString() {
@@ -80,6 +80,16 @@ class SqlServerQueryStringProvider extends QueryStringProvider{
     }
 
     @Override
+    String getIdentityColumnInformationQueryString() {
+        '''
+        SELECT OBJECT_NAME(object_id) table_name, name column_name, is_identity, seed_value, increment_value
+        FROM sys.identity_columns
+        WHERE OBJECTPROPERTY(object_id, 'IsUserTable') = 1
+          AND OBJECT_SCHEMA_NAME(object_id) = ?;
+        '''.stripIndent()
+    }
+
+    @Override
     String getDatabaseStructureQueryString() {
         '''
         SELECT *, (SELECT TABLE_TYPE FROM INFORMATION_SCHEMA.TABLES WHERE COLUMNS.TABLE_CATALOG=TABLES.TABLE_CATALOG AND COLUMNS.TABLE_SCHEMA=TABLES.TABLE_SCHEMA AND COLUMNS.TABLE_NAME=TABLES.TABLE_NAME) TABLE_TYPE FROM INFORMATION_SCHEMA.COLUMNS;
@@ -108,11 +118,11 @@ class SqlServerQueryStringProvider extends QueryStringProvider{
         String schemaIdentifier = schemaName ? "${escapeIdentifier(schemaName)}." : ""
         String fullTableName = "${schemaIdentifier}${escapeIdentifier(tableName)}"
         [
-            """SELECT SUM(dm_db_partition_stats.row_count) AS approx_count
+                """SELECT SUM(dm_db_partition_stats.row_count) AS approx_count
 FROM sys.dm_db_partition_stats
 WHERE object_id = OBJECT_ID('${fullTableName}')
 AND (index_id = 0 OR index_id = 1)""".stripIndent(),
-            "SELECT COUNT_BIG(*) AS approx_count FROM ${fullTableName} WITH (NOLOCK)".toString()
+                "SELECT COUNT_BIG(*) AS approx_count FROM ${fullTableName} WITH (NOLOCK)".toString()
         ]
     }
 
@@ -194,7 +204,7 @@ WHERE ${escapeIdentifier(columnName)} IS NOT NULL""".stripIndent()
         String column = "${escapeIdentifier(schemaName)}.${escapeIdentifier(tableName)}.${escapeIdentifier(columnName)}"
         String table = "${escapeIdentifier(schemaName)}.${escapeIdentifier(tableName)}"
         "WITH intervals AS (\n${intervals}\n)" +
-        """
+                """
 SELECT
     interval_label,
     ${samplingStrategy.scaleFactor()} * COUNT_BIG(${escapeIdentifier(columnName)}) AS interval_count
@@ -216,7 +226,7 @@ ORDER BY interval_start ASC;
      * or a string
      */
     String formatDataType(DataType dataType, Object value) {
-        if (isColumnForDateSummary(dataType)){
+        if (isColumnForDateSummary(dataType)) {
             "CONVERT(DATETIME, '${DateTimeFormatter.ISO_LOCAL_DATE_TIME.format(value as TemporalAccessor)}', 126)"
         } else {
             "${value}"

@@ -596,7 +596,7 @@ class SqlServerDatabaseDataModelImporterProviderServiceSpec
         assert organisationTable.dataElements.findAll{it.summaryMetadata}.size() == organisationTable.summaryMetadata.size()
     }
 
-    private checkSampleNoSummaryMetadata(DataModel dataModel) {
+    private void checkSampleNoSummaryMetadata(DataModel dataModel) {
         final DataClass publicSchema = dataModel.childDataClasses.first()
         final Set<DataClass> dataClasses = publicSchema.dataClasses
         final DataClass sampleTable = dataClasses.find {it.label == 'sample'}
@@ -621,6 +621,10 @@ class SqlServerDatabaseDataModelImporterProviderServiceSpec
             DataElement de = sampleTable.dataElements.find{it.label == columnName}
             assertEquals 'Zero summaryMetadata', 0, de.summaryMetadata.size()
         }
+        DataElement idColumn = sampleTable.dataElements.find {it.label == 'id'}
+        assertEquals 'Identity column', 'true', idColumn.metadata.find {it.key == 'identity'}.value
+        assertEquals 'Identity seed value', '1', idColumn.metadata.find {it.key == 'identity_seed_value'}.value
+        assertEquals 'Identity increment value', '1', idColumn.metadata.find {it.key == 'identity_increment_value'}.value
     }
 
     private void checkSampleSummaryMetadata(DataModel dataModel) {
@@ -647,6 +651,9 @@ class SqlServerDatabaseDataModelImporterProviderServiceSpec
 
         DataElement deId = sampleTable.dataElements.find{it.label == 'id'}
         assertEquals 'Zero summaryMetadata', 0, deId.summaryMetadata.size()
+        assertEquals 'Identity column', 'true', deId.metadata.find {it.key == 'identity'}.value
+        assertEquals 'Identity seed value', '1', deId.metadata.find {it.key == 'identity_seed_value'}.value
+        assertEquals 'Identity increment value', '1', deId.metadata.find {it.key == 'identity_increment_value'}.value
 
         expectedColumns.findAll {it != 'id'}.each {columnName ->
             DataElement de = sampleTable.dataElements.find{it.label == columnName}
