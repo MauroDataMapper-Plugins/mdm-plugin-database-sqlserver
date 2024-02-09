@@ -68,6 +68,30 @@
         "derived": false
       },
       {
+        "fieldName": "Identity",
+        "metadataPropertyName": "identity",
+        "minMultiplicity": 0,
+        "maxMultiplicity": 1,
+        "dataType": "boolean",
+        "derived": false
+      },
+      {
+        "fieldName": "Identity Seed Value",
+        "metadataPropertyName": "identity_seed_value",
+        "minMultiplicity": 0,
+        "maxMultiplicity": 1,
+        "dataType": "int",
+        "derived": false
+      },
+      {
+        "fieldName": "Identity Increment Value",
+        "metadataPropertyName": "identity_increment_value",
+        "minMultiplicity": 0,
+        "maxMultiplicity": 1,
+        "dataType": "int",
+        "derived": false
+      },
+      {
         "fieldName": "Character Maximum Length",
         "metadataPropertyName": "character_maximum_length",
         "minMultiplicity": 0,
